@@ -14,40 +14,41 @@ import java.util.stream.Stream;
 import ap25.*;
 
 public class MyBoard implements Board, Cloneable {
-  Color board[];
-  Move move = Move.ofPass(NONE);
+  Color board[]; // 盤面の状態を保持する配列
+  Move move = Move.ofPass(NONE); // 直前の手
 
   public MyBoard() {
     this.board = Stream.generate(() -> NONE).limit(LENGTH).toArray(Color[]::new);
-    init();
-  }
+    init(); // 新しい盤面を初期化
+  } // コンストラクタ
+  // 初期化時に盤面を生成する関数を持つ
 
   MyBoard(Color board[], Move move) {
     this.board = Arrays.copyOf(board, board.length);
     this.move = move;
-  }
+  } // コンストラクタ（オーバーロード）
 
   public MyBoard clone() {
     return new MyBoard(this.board, this.move);
-  }
+  } // クローンメソッド
 
   void init() {
     set(Move.parseIndex("c3"), BLACK);
     set(Move.parseIndex("d4"), BLACK);
     set(Move.parseIndex("d3"), WHITE);
     set(Move.parseIndex("c4"), WHITE);
-  }
+  } // 起動時の盤面設定メソッド
 
-  public Color get(int k) { return this.board[k]; }
-  public Move getMove() { return this.move; }
+  public Color get(int k) { return this.board[k]; } // 指定位置の色を取得
+  public Move getMove() { return this.move; } // 直前の手を取得
 
   public Color getTurn() {
     return this.move.isNone() ? BLACK : this.move.getColor().flipped();
-  }
+  } // 現在の手番を取得
 
   public void set(int k, Color color) {
     this.board[k] = color;
-  }
+  } // 指定位置に色を設定
 
   public boolean equals(Object otherObj) {
     if (otherObj instanceof MyBoard) {
@@ -55,32 +56,32 @@ public class MyBoard implements Board, Cloneable {
       return Arrays.equals(this.board, other.board);
     }
     return false;
-  }
+  } // 盤面の等価判定
 
   public String toString() {
     return MyBoardFormatter.format(this);
-  }
+  } // 盤面を文字列化
 
   public int count(Color color) {
     return countAll().getOrDefault(color, 0L).intValue();
-  }
+  } // 指定色の石の数をカウント
 
   public boolean isEnd() {
     var lbs = findNoPassLegalIndexes(BLACK);
     var lws = findNoPassLegalIndexes(WHITE);
     return lbs.size() == 0 && lws.size() == 0;
-  }
+  } // ゲーム終了判定
 
   public Color winner() {
     var v = score();
     if (isEnd() == false || v == 0 ) return NONE;
     return v > 0 ? BLACK : WHITE;
-  }
+  } // 勝者を返す
 
   public void foul(Color color) {
     var winner = color.flipped();
     IntStream.range(0, LENGTH).forEach(k -> this.board[k] = winner);
-  }
+  } // 反則時の処理（相手の勝ちにする）
 
   public int score() {
     var cs = countAll();
@@ -93,23 +94,23 @@ public class MyBoard implements Board, Cloneable {
         score += Integer.signum(score) * ns;
 
     return score;
-  }
+  } // スコア計算
 
   Map<Color, Long> countAll() {
     return Arrays.stream(this.board).collect(
         Collectors.groupingBy(Function.identity(), Collectors.counting()));
-  }
+  } // 全色の石の数をカウント
 
   public List<Move> findLegalMoves(Color color) {
     return findLegalIndexes(color).stream()
         .map(k -> new Move(k, color)).toList();
-  }
+  } // 合法手のリストを返す
 
   List<Integer> findLegalIndexes(Color color) {
     var moves = findNoPassLegalIndexes(color);
     if (moves.size() == 0) moves.add(Move.PASS);
     return moves;
-  }
+  } // 合法手（パス含む）のインデックスリスト
 
   List<Integer> findNoPassLegalIndexes(Color color) {
     var moves = new ArrayList<Integer>();
@@ -122,7 +123,7 @@ public class MyBoard implements Board, Cloneable {
       }
     }
     return moves;
-  }
+  } // 合法手（パス以外）のインデックスリスト
 
   List<List<Integer>> lines(int k) {
     var lines = new ArrayList<List<Integer>>();
@@ -131,7 +132,7 @@ public class MyBoard implements Board, Cloneable {
       lines.add(line);
     }
     return lines;
-  }
+  } // 指定位置から8方向のラインを取得
 
   List<Move> outflanked(List<Integer> line, Color color) {
     if (line.size() <= 1) return new ArrayList<Move>();
@@ -143,7 +144,7 @@ public class MyBoard implements Board, Cloneable {
       flippables.add(new Move(k, color));
     }
     return new ArrayList<Move>();
-  }
+  } // 挟んでひっくり返せる石のリストを返す
 
   public MyBoard placed(Move move) {
     var b = clone();
@@ -163,12 +164,12 @@ public class MyBoard implements Board, Cloneable {
     b.set(k, color);
 
     return b;
-  }
+  } // 指定手を打った後の盤面を返す
 
   public MyBoard flipped() {
     var b = clone();
     IntStream.range(0, LENGTH).forEach(k -> b.board[k] = b.board[k].flipped());
     b.move = this.move.flipped();
     return b;
-  }
+  } // 盤面と手番を反転した盤面を返す
 }

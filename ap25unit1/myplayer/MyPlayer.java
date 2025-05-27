@@ -11,6 +11,7 @@ import java.util.stream.IntStream;
 import ap25.*;
 
 class MyEval {
+  // マスの価値　角が高く、一部マイナス
   static float[][] M = {
       { 10,  10, 10, 10,  10,  10},
       { 10,  -5,  1,  1,  -5,  10},
@@ -19,7 +20,7 @@ class MyEval {
       { 10,  -5,  1,  1,  -5,  10},
       { 10,  10, 10, 10,  10,  10},
   };
-
+  // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
   public float value(Board board) {
     if (board.isEnd()) return 1000000 * board.score();
 
@@ -27,7 +28,7 @@ class MyEval {
       .mapToDouble(k -> score(board, k))
       .reduce(Double::sum).orElse(0);
   }
-
+  // 特定のマス（k）のスコア計算：盤面の色値×重み
   float score(Board board, int k) {
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
@@ -35,10 +36,10 @@ class MyEval {
 
 public class MyPlayer extends ap25.Player {
   static final String MY_NAME = "MY24";
-  MyEval eval;
-  int depthLimit;
-  Move move;
-  MyBoard board;
+  MyEval eval;          // 評価関数
+  int depthLimit;       // 探索の最大深さ
+  Move move;            // 選んだ手
+  MyBoard board;        // 内部的に使うボード状態（MyBoard型）
 
   public MyPlayer(Color color) {
     this(MY_NAME, color, new MyEval(), 2);
@@ -55,40 +56,51 @@ public class MyPlayer extends ap25.Player {
     this(name, color, new MyEval(), depthLimit);
   }
 
+  // Boardの状態をMyBoardに代入
   public void setBoard(Board board) {
     for (var i = 0; i < LENGTH; i++) {
       this.board.set(i, board.get(i));
     }
   }
 
-  boolean isBlack() { return getColor() == BLACK; }
-
-  public Move think(Board board) {
-    this.board = this.board.placed(board.getMove());
-
-    if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
-      this.move = Move.ofPass(getColor());
-    } else {
-      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
-      this.move = null;
-
-      maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
-
-      this.move = this.move.colored(getColor());
-    }
-
-    this.board = this.board.placed(this.move);
-    return this.move;
+  // 黒番か判定
+  boolean isBlack() {
+    return getColor() == BLACK;
   }
 
+  public Move think(Board board) {
+  // 相手の着手を反映
+  this.board = this.board.placed(board.getMove());
+
+  // パスの場合（合法手なし）
+  if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
+    this.move = Move.ofPass(getColor());
+  } else {
+    // 黒番ならそのまま、白番なら反転（白→黒にする）
+    var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+    this.move = null;
+
+    // αβ法で最大探索を開始
+    maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
+
+    // 選んだ手に色を付ける
+    this.move = this.move.colored(getColor());
+  }
+
+  // 自分の着手を盤面に反映
+  this.board = this.board.placed(this.move);
+  return this.move;
+  }
+
+  ////////// ミニマックス法だよ！
   float maxSearch(Board board, float alpha, float beta, int depth) {
     if (isTerminal(board, depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(BLACK);
-    moves = order(moves);
+    moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
 
     if (depth == 0)
-      this.move = moves.get(0);
+      this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
 
     for (var move: moves) {
       var newBoard = board.placed(move);
@@ -97,10 +109,10 @@ public class MyPlayer extends ap25.Player {
       if (v > alpha) {
         alpha = v;
         if (depth == 0)
-          this.move = move;
+          this.move = move;  // 最良手を更新
       }
 
-      if (alpha >= beta)
+      if (alpha >= beta)  // 枝刈り条件
         break;
     }
 
@@ -122,11 +134,14 @@ public class MyPlayer extends ap25.Player {
 
     return beta;
   }
-
+  ////////// ミニマックス法終わり
+  /// 
+  // ゲーム終了または深さ制限
   boolean isTerminal(Board board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
   }
 
+  // 手をランダムに並び替える（単純なmove ordering）
   List<Move> order(List<Move> moves) {
     var shuffled = new ArrayList<Move>(moves);
     Collections.shuffle(shuffled);
