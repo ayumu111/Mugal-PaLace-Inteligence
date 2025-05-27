@@ -62,33 +62,33 @@ class MyEval {
 
   float getw1(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return 1; // 序盤
-    if (stoneCount < 24) return 10; // 中盤
-    return 100; // 終盤
+    if (stoneCount < 12) return 100; // 序盤
+    if (stoneCount < 24) return 50; // 中盤
+    return 10; // 終盤
   }
 
   float getw2(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return 0; // 序盤
-    if (stoneCount < 24) return 100; // 中盤
-    return 20; // 終盤
+    if (stoneCount < 12) return 10; // 序盤
+    if (stoneCount < 24) return 20; // 中盤
+    return 1; // 終盤
   }
   float getw3(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return 0; // 序盤
-    if (stoneCount < 24) return -100; // 中盤
-    return -20; // 終盤
+    if (stoneCount < 12) return -10; // 序盤
+    if (stoneCount < 24) return -20; // 中盤
+    return -1; // 終盤
   }
   float getw4(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
     if (stoneCount < 12) return 1; // 序盤
-    if (stoneCount < 24) return 1; // 中盤
+    if (stoneCount < 24) return 5; // 中盤
     return 100; // 終盤
   }
   float getw5(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
     if (stoneCount < 12) return -1; // 序盤
-    if (stoneCount < 24) return -1; // 中盤
+    if (stoneCount < 24) return -5; // 中盤
     return -100; // 終盤
   }
   // 進行状況に応じて重み配列を返す
@@ -114,7 +114,7 @@ public class MyPlayer extends ap25.Player {
   MyBoard board;        // 内部的に使うボード状態（MyBoard型）
 
   public MyPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 2);
+    this(MY_NAME, color, new MyEval(), 3);
   }
 
   public MyPlayer(String name, Color color, MyEval eval, int depthLimit) {
