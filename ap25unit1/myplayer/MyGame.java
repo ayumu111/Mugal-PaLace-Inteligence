@@ -7,13 +7,12 @@ import java.util.stream.*;
 
 public class MyGame {
   public static void main(String args[]) {
-    var player1 = new myplayer.MyPlayer(BLACK); // 黒プレイヤー(MyPlayer)
-    var player2 = new myplayer.RandomPlayer(WHITE); // 白プレイヤー(RandomPlayer)
-    var board = new MyBoard(); // 新しい盤面
-    var game = new MyGame(board, player1, player2); // ゲームインスタンス生成
-    game.play(); // ゲーム開始
-    var game2 = new MyGame(board, player2, player1); // ゲームインスタンス生成
-    game2.play(); // ゲーム開始
+    var player1 = new myplayer.MyPlayer(BLACK);
+    // Randomのプレイヤー設定（白色）
+    var player2 = new myplayer.RandomPlayer(WHITE);
+    var board = new MyBoard();
+    var game = new MyGame(board, player1, player2);
+    game.play();
   }
 
   static final float TIME_LIMIT_SECONDS = 60; // 持ち時間（秒）
