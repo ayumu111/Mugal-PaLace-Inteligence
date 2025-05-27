@@ -14,6 +14,8 @@ public class MyGame {
     var board = new MyBoard();
     var game = new MyGame(board, player1, player2);
     game.play();
+    var game2 = new MyGame(board, player2, player1);
+    game2.play(); // 逆転での対戦
   }
 
   static final float TIME_LIMIT_SECONDS = 60; // 持ち時間（秒）
