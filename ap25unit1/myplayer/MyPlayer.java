@@ -95,27 +95,27 @@ public class MyPlayer extends ap25.Player {
   }
 
   public Move think(Board board) {
-  // 相手の着手を反映
-  this.board = this.board.placed(board.getMove());
+    // 相手の着手を反映
+    this.board = this.board.placed(board.getMove());
 
-  // パスの場合（合法手なし）
-  if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
-    this.move = Move.ofPass(getColor());
-  } else {
-    // 黒番ならそのまま、白番なら反転（白→黒にする）
-    var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
-    this.move = null;
+    // パスの場合（合法手なし）
+    if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
+      this.move = Move.ofPass(getColor());
+    } else {
+      // 黒番ならそのまま、白番なら反転（白→黒にする）
+      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+      this.move = null;
 
-    // αβ法で最大探索を開始
-    maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
+      // αβ法で最大探索を開始
+      maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
 
-    // 選んだ手に色を付ける
-    this.move = this.move.colored(getColor());
-  }
+      // 選んだ手に色を付ける
+      this.move = this.move.colored(getColor());
+    }
 
-  // 自分の着手を盤面に反映
-  this.board = this.board.placed(this.move);
-  return this.move;
+    // 自分の着手を盤面に反映
+    this.board = this.board.placed(this.move);
+    return this.move;
   }
 
   ////////// ミニマックス法だよ！
