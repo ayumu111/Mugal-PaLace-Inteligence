@@ -11,11 +11,6 @@ import java.util.stream.IntStream;
 import ap25.*;
 
 class MyEval {
-  float w1 = 1;
-  float w2 = 1;
-  float w3 = 1;
-  float w4 = 1;
-  float w5 = 1;
   // 序盤・中盤・終盤用の重み配列
   static final float[][] M_EARLY = {
       { 20,  10, 10, 10,  10,  20},
@@ -47,20 +42,60 @@ class MyEval {
     if (board.isEnd()) return 1000000 * board.score();
     float psi = (float) IntStream.range(0, LENGTH)
     .mapToDouble(k -> score(board, k))
-    .reduce(Double::sum).orElse(0);;
+    .reduce(Double::sum).orElse(0);
+
     int lb = board.findLegalMoves(BLACK).size();
     int lw = board.findLegalMoves(WHITE).size();
+
     // 黒と白の石の数に応じてスコアを調整
     int nb = board.count(Color.BLACK);
     int nw = board.count(Color.WHITE);
+
+    float w1 = getw1(board);
+    float w2 = getw2(board);
+    float w3 = getw3(board);
+    float w4 = getw4(board);
+    float w5 = getw5(board);
+
     return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
   }
 
+  float getw1(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 1; // 序盤
+    if (stoneCount < 24) return 10; // 中盤
+    return 100; // 終盤
+  }
+
+  float getw2(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 0; // 序盤
+    if (stoneCount < 24) return 100; // 中盤
+    return 20; // 終盤
+  }
+  float getw3(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 0; // 序盤
+    if (stoneCount < 24) return -100; // 中盤
+    return -20; // 終盤
+  }
+  float getw4(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 1; // 序盤
+    if (stoneCount < 24) return 1; // 中盤
+    return 100; // 終盤
+  }
+  float getw5(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return -1; // 序盤
+    if (stoneCount < 24) return -1; // 中盤
+    return -100; // 終盤
+  }
   // 進行状況に応じて重み配列を返す
   float[][] getM(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 16) return M_EARLY; // 序盤
-    if (stoneCount < 32) return M_MIDDLE; // 中盤
+    if (stoneCount < 12) return M_EARLY; // 序盤
+    if (stoneCount < 24) return M_MIDDLE; // 中盤
     return M_LATE; // 終盤
   }
 
