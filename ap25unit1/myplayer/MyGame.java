@@ -7,20 +7,32 @@ import java.util.stream.*;
 
 public class MyGame {
   public static void main(String args[]) {
+    int MyPlayerWins = 0; // MyPlayerの勝利数
+    int RandomPlayerWins = 0; // RandomPlayerの勝利数
+    int[] results = new int[2]; // 勝利数を格納する配列 
 
     // 1回目（黒:MyPlayer, 白:RandomPlayer）
     var myPlayer1 = new myplayer.MyPlayer(BLACK);
     var randomPlayer1 = new myplayer.RandomPlayer(WHITE);
     var board1 = new MyBoard();
     var game1 = new MyGame(board1, myPlayer1, randomPlayer1);
-    game1.play();
+    results = game1.play(1);//1回目の対戦
+    MyPlayerWins = results[0]; // MyPlayerの勝利数を更新
+    RandomPlayerWins = results[1]; // RandomPlayerの勝利数を更新
 
     // 2回目（黒:RandomPlayer, 白:MyPlayer）
     var randomPlayer2 = new myplayer.RandomPlayer(BLACK);
     var myPlayer2 = new myplayer.MyPlayer(WHITE);
     var board2 = new MyBoard();
     var game2 = new MyGame(board2, randomPlayer2, myPlayer2);
-    game2.play();
+    results = game2.play(2);//2回目の対戦
+    MyPlayerWins += results[0]; // MyPlayerの勝利数を更新
+    RandomPlayerWins += results[1]; // RandomPlayerの勝利数を更新
+    // 最終結果を表示
+    System.out.printf("Final Results: MyPlayer Wins: %d, RandomPlayer Wins: %d%n", MyPlayerWins, RandomPlayerWins);
+    //勝率
+    float winRate = (float) MyPlayerWins / (MyPlayerWins + RandomPlayerWins) * 100;
+    System.out.printf("Win Rate: %.2f%%\n", winRate); // 勝率を表示
 }
 
   static final float TIME_LIMIT_SECONDS = 60; // 持ち時間（秒）
@@ -41,9 +53,11 @@ public class MyGame {
     this.players = Map.of(BLACK, black, WHITE, white); // プレイヤーマップ
   }
 
-  public void play() {
+  public int[] play(int gameNumber) {
+    int MyPlayerWins = 0; // MyPlayerの勝利数
+    int RandomPlayerWins = 0; // RandomPlayerの勝利数
 
-    for(int i = 0;  i < 100; i++) { // 100回対戦
+    for(int i = 0;  i < 10; i++) { // 100回対戦
       
       this.players.values().forEach(p -> p.setBoard(this.board.clone())); // 各プレイヤーに盤面をセット
 
@@ -84,23 +98,27 @@ public class MyGame {
       }
 
       //printResult(board, moves); // 結果表示
-      if (board.winner() == BLACK) {
-        WinBlack++; // 黒勝利
-      } else if (board.winner() == WHITE) {
-        WinWhite++; // 白勝利
+      if (board.winner() == BLACK && gameNumber == 1) {
+        MyPlayerWins++; // MyPlayer勝利
+      } else if (board.winner() == WHITE && gameNumber == 1) {
+        RandomPlayerWins++; // RandomPlayer勝利
+      } else if (board.winner() == BLACK && gameNumber == 2) {
+        RandomPlayerWins++; // RandomPlayer勝利
+      } else if (board.winner() == WHITE && gameNumber == 2) {
+        MyPlayerWins++; // MyPlayer勝利
       }
       board = new MyBoard(); // 盤面をリセット
       moves.clear(); // 手の履歴をクリア
       this.times.put(BLACK, 0f); // 黒の時間をリセット
       this.times.put(WHITE, 0f); // 白の時間をリセット
     }
-    System.out.printf("Black: %d, White: %d\n", WinBlack, WinWhite); // 勝敗数表示
-    float totalGames = WinBlack + WinWhite;
-    if (totalGames > 0) {
-      float blackWinRate = (WinBlack / totalGames) * 100;
-      float whiteWinRate = (WinWhite / totalGames) * 100;
-      System.out.printf("Black win rate: %.2f%%, White win rate: %.2f%%\n", blackWinRate, whiteWinRate);
-    }
+
+    int[] results = new int[2];
+    results[0] = MyPlayerWins; // MyPlayerの勝利数
+    results[1] = RandomPlayerWins; // RandomPlayerの勝利数
+    System.out.printf("Game %d: MyPlayer Wins: %d, RandomPlayer Wins: %d%n", gameNumber, MyPlayerWins, RandomPlayerWins);
+    return results; // 勝利数を返す
+    
   }
 
   // 手の妥当性チェック
