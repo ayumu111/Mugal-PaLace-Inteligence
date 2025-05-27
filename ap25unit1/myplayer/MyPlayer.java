@@ -11,6 +11,11 @@ import java.util.stream.IntStream;
 import ap25.*;
 
 class MyEval {
+  float w1 = 1;
+  float w2 = 1;
+  float w3 = 1;
+  float w4 = 1;
+  float w5 = 1;
   // 序盤・中盤・終盤用の重み配列
   static final float[][] M_EARLY = {
       { 20,  10, 10, 10,  10,  20},
@@ -40,9 +45,15 @@ class MyEval {
   // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
   public float value(Board board) {
     if (board.isEnd()) return 1000000 * board.score();
-    return (float) IntStream.range(0, LENGTH)
-      .mapToDouble(k -> score(board, k))
-      .reduce(Double::sum).orElse(0);
+    float psi = (float) IntStream.range(0, LENGTH)
+    .mapToDouble(k -> score(board, k))
+    .reduce(Double::sum).orElse(0);;
+    int lb = board.findLegalMoves(BLACK).size();
+    int lw = board.findLegalMoves(WHITE).size();
+    // 黒と白の石の数に応じてスコアを調整
+    int nb = board.count(Color.BLACK);
+    int nw = board.count(Color.WHITE);
+    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
   }
 
   // 進行状況に応じて重み配列を返す
