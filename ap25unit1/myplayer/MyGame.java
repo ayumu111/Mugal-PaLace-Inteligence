@@ -7,16 +7,21 @@ import java.util.stream.*;
 
 public class MyGame {
   public static void main(String args[]) {
-    // プレイヤー設定（黒色）○
-    var player1 = new myplayer.MyPlayer(BLACK);
-    // Randomのプレイヤー設定（白色）×
-    var player2 = new myplayer.RandomPlayer(WHITE);
-    var board = new MyBoard();
-    var game = new MyGame(board, player1, player2);
-    game.play();
-    var game2 = new MyGame(board, player2, player1);
-    game2.play(); // 逆転での対戦
-  }
+
+    // 1回目（黒:MyPlayer, 白:RandomPlayer）
+    var myPlayer1 = new myplayer.MyPlayer(BLACK);
+    var randomPlayer1 = new myplayer.RandomPlayer(WHITE);
+    var board1 = new MyBoard();
+    var game1 = new MyGame(board1, myPlayer1, randomPlayer1);
+    game1.play();
+
+    // 2回目（黒:RandomPlayer, 白:MyPlayer）
+    var randomPlayer2 = new myplayer.RandomPlayer(BLACK);
+    var myPlayer2 = new myplayer.MyPlayer(WHITE);
+    var board2 = new MyBoard();
+    var game2 = new MyGame(board2, randomPlayer2, myPlayer2);
+    game2.play();
+}
 
   static final float TIME_LIMIT_SECONDS = 60; // 持ち時間（秒）
 
@@ -84,6 +89,10 @@ public class MyGame {
       } else if (board.winner() == WHITE) {
         WinWhite++; // 白勝利
       }
+      board = new MyBoard(); // 盤面をリセット
+      moves.clear(); // 手の履歴をクリア
+      this.times.put(BLACK, 0f); // 黒の時間をリセット
+      this.times.put(WHITE, 0f); // 白の時間をリセット
     }
     System.out.printf("Black: %d, White: %d\n", WinBlack, WinWhite); // 勝敗数表示
     float totalGames = WinBlack + WinWhite;
