@@ -11,25 +11,51 @@ import java.util.stream.IntStream;
 import ap25.*;
 
 class MyEval {
-  // マスの価値　角が高く、一部マイナス
-  static float[][] M = {
-      { 10,  10, 10, 10,  10,  10},
+  // 序盤・中盤・終盤用の重み配列
+  static final float[][] M_EARLY = {
+      { 20,  10, 10, 10,  10,  20},
       { 10,  -5,  1,  1,  -5,  10},
       { 10,   1,  1,  1,   1,  10},
       { 10,   1,  1,  1,   1,  10},
       { 10,  -5,  1,  1,  -5,  10},
-      { 10,  10, 10, 10,  10,  10},
+      { 20,  10, 10, 10,  10,  20},
   };
+  static final float[][] M_MIDDLE = {
+      { 30,  12, 12, 12,  12,  30},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 30,  12, 12, 12,  12,  30},
+  };
+  static final float[][] M_LATE = {
+      { 50,  20, 20, 20,  20,  50},
+      { 20,   0,  5,  5,   0,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   0,  5,  5,   0,  20},
+      { 50,  20, 20, 20,  20,  50},
+  };
+
   // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
   public float value(Board board) {
     if (board.isEnd()) return 1000000 * board.score();
-
     return (float) IntStream.range(0, LENGTH)
       .mapToDouble(k -> score(board, k))
       .reduce(Double::sum).orElse(0);
   }
+
+  // 進行状況に応じて重み配列を返す
+  float[][] getM(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 16) return M_EARLY; // 序盤
+    if (stoneCount < 32) return M_MIDDLE; // 中盤
+    return M_LATE; // 終盤
+  }
+
   // 特定のマス（k）のスコア計算：盤面の色値×重み
   float score(Board board, int k) {
+    float[][] M = getM(board);
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
 }
