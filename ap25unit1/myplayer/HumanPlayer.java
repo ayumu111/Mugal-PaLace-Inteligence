@@ -54,21 +54,23 @@ public class HumanPlayer extends ap25.Player {
       var moves = newBoard.findLegalMoves(BLACK);
       System.out.println("合法手を選んでください（例: 0, 1, 2...）:");
       Scanner scanner = new Scanner(System.in);
-      Boolean end = false;
+      Boolean end = true;
       while (end) {
-        int number = scanner.nextInt();  // 整数の入力
-        for (var move : moves) {
-          if (move.getIndex() == number) {
-            this.move = move;
-            end = true;  // 合法手が見つかったらループを抜ける  
+        System.out.print("番号を入力: ");
+        if (scanner.hasNextInt()) {
+          int number = scanner.nextInt();
+          for (var move : moves) {
+            if (move.getIndex() == number) {
+              this.move = move;
+              end = false;
+              break;
+            }
           }
+          if (end) System.out.println("無効な手です。");
+        } else {
+          System.out.println("整数を入力してください。");
         }
-        System.out.println("無効な手です");
       }
-      scanner.close();
-
-      // 選んだ手に色を付ける
-      this.move = this.move.colored(getColor());
     }
 
     // 自分の着手を盤面に反映
