@@ -8,6 +8,7 @@ import java.util.stream.*;
 public class MyGame {
   public static void main(String args[]) {
     var player1 = new myplayer.MyPlayer(BLACK);
+    // Randomのプレイヤー設定（白色）
     var player2 = new myplayer.RandomPlayer(WHITE);
     var board = new MyBoard();
     var game = new MyGame(board, player1, player2);
