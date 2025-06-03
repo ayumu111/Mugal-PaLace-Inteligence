@@ -13,8 +13,8 @@ class Competition25 {
       return new Player[] {
           new p25x00.OurPlayer(color),
           new myplayer.MyPlayer(color),
-          new ap25.league.RandomPlayer(color),
-          new ap25.league.RandomPlayer(color),
+          // new ap25.league.RandomPlayer(color),
+          //new ap25.league.RandomPlayer(color),
       };
     };
 

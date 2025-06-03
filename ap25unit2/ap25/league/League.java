@@ -66,7 +66,10 @@ public class League {
     executeAsync();
     printResult();
   }
-
+  
+  // 対戦のセットアップ
+  // リーグに入れたプレイヤーの全組み合わせをmatrixに格納
+  // matchesに全ての対戦を格納
   void setup() throws Exception {
     this.matrix = new Match[this.n][this.n];
     this.matches = new ArrayList<>();
@@ -90,6 +93,10 @@ public class League {
     }
   }
 
+  // 非同期実行
+  // すべての対戦を並列に実行
+  // 例外が発生した場合はエラーメッセージを出力
+  // すべての対戦が終了するまで待機
   void executeAsync() {
     try {
       this.pool.submit(() -> matches.parallelStream()
