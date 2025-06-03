@@ -61,37 +61,17 @@ class MyEval {
     return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
   }
 
-  float getw1(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return 100; // 序盤
-    if (stoneCount < 24) return 50; // 中盤
-    return 10; // 終盤
+  // 評価関数の重みを外部からセットできるようにする
+  static float customW1 = 100, customW2 = 10, customW3 = -10, customW4 = 1, customW5 = -1;
+  public static void setEvalWeights(float w1, float w2, float w3, float w4, float w5) {
+    customW1 = w1; customW2 = w2; customW3 = w3; customW4 = w4; customW5 = w5;
   }
+  float getw1(Board board) { return customW1; }
+  float getw2(Board board) { return customW2; }
+  float getw3(Board board) { return customW3; }
+  float getw4(Board board) { return customW4; }
+  float getw5(Board board) { return customW5; }
 
-  float getw2(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return 10; // 序盤
-    if (stoneCount < 24) return 20; // 中盤
-    return 1; // 終盤
-  }
-  float getw3(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return -10; // 序盤
-    if (stoneCount < 24) return -20; // 中盤
-    return -1; // 終盤
-  }
-  float getw4(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return 1; // 序盤
-    if (stoneCount < 24) return 5; // 中盤
-    return 100; // 終盤
-  }
-  float getw5(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 12) return -1; // 序盤
-    if (stoneCount < 24) return -5; // 中盤
-    return -100; // 終盤
-  }
   // 進行状況に応じて重み配列を返す
   float[][] getM(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
@@ -116,7 +96,7 @@ public class OurPlayer extends ap25.Player {
   OurBoard board;
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 6);
+    this(MY_NAME, color, new MyEval(), 2);
   }
 
   // コンストラクタ（詳細指定）
@@ -228,5 +208,9 @@ public class OurPlayer extends ap25.Player {
     var shuffled = new ArrayList<Move>(moves);
     Collections.shuffle(shuffled);
     return shuffled;
+  }
+
+  public static void setEvalWeights(float w1, float w2, float w3, float w4, float w5) {
+    MyEval.setEvalWeights(w1, w2, w3, w4, w5);
   }
 }
