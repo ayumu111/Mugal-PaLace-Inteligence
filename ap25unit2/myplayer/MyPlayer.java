@@ -107,7 +107,7 @@ class MyEval {
 }
 
 public class MyPlayer extends ap25.Player {
-  static final String MY_NAME = "MY24";
+  static final String MY_NAME = "MY25";
   MyEval eval;          // 評価関数
   int depthLimit;       // 探索の最大深さ
   Move move;            // 選んだ手
