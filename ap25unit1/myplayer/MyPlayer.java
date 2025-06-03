@@ -40,16 +40,62 @@ class MyEval {
   // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
   public float value(Board board) {
     if (board.isEnd()) return 1000000 * board.score();
-    return (float) IntStream.range(0, LENGTH)
-      .mapToDouble(k -> score(board, k))
-      .reduce(Double::sum).orElse(0);
+    float psi = (float) IntStream.range(0, LENGTH)
+    .mapToDouble(k -> score(board, k))
+    .reduce(Double::sum).orElse(0);
+
+    int lb = board.findLegalMoves(BLACK).size();
+    int lw = board.findLegalMoves(WHITE).size();
+
+    // 黒と白の石の数に応じてスコアを調整
+    int nb = board.count(Color.BLACK);
+    int nw = board.count(Color.WHITE);
+
+    float w1 = getw1(board);
+    float w2 = getw2(board);
+    float w3 = getw3(board);
+    float w4 = getw4(board);
+    float w5 = getw5(board);
+
+    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
   }
 
+  float getw1(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 100; // 序盤
+    if (stoneCount < 24) return 50; // 中盤
+    return 10; // 終盤
+  }
+
+  float getw2(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 10; // 序盤
+    if (stoneCount < 24) return 20; // 中盤
+    return 1; // 終盤
+  }
+  float getw3(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return -10; // 序盤
+    if (stoneCount < 24) return -20; // 中盤
+    return -1; // 終盤
+  }
+  float getw4(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 1; // 序盤
+    if (stoneCount < 24) return 5; // 中盤
+    return 100; // 終盤
+  }
+  float getw5(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return -1; // 序盤
+    if (stoneCount < 24) return -5; // 中盤
+    return -100; // 終盤
+  }
   // 進行状況に応じて重み配列を返す
   float[][] getM(Board board) {
     int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
-    if (stoneCount < 16) return M_EARLY; // 序盤
-    if (stoneCount < 32) return M_MIDDLE; // 中盤
+    if (stoneCount < 12) return M_EARLY; // 序盤
+    if (stoneCount < 24) return M_MIDDLE; // 中盤
     return M_LATE; // 終盤
   }
 
@@ -68,7 +114,7 @@ public class MyPlayer extends ap25.Player {
   MyBoard board;        // 内部的に使うボード状態（MyBoard型）
 
   public MyPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 2);
+    this(MY_NAME, color, new MyEval(), 3);
   }
 
   public MyPlayer(String name, Color color, MyEval eval, int depthLimit) {
@@ -95,27 +141,27 @@ public class MyPlayer extends ap25.Player {
   }
 
   public Move think(Board board) {
-  // 相手の着手を反映
-  this.board = this.board.placed(board.getMove());
+    // 相手の着手を反映
+    this.board = this.board.placed(board.getMove());
 
-  // パスの場合（合法手なし）
-  if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
-    this.move = Move.ofPass(getColor());
-  } else {
-    // 黒番ならそのまま、白番なら反転（白→黒にする）
-    var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
-    this.move = null;
+    // パスの場合（合法手なし）
+    if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
+      this.move = Move.ofPass(getColor());
+    } else {
+      // 黒番ならそのまま、白番なら反転（白→黒にする）
+      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+      this.move = null;
 
-    // αβ法で最大探索を開始
-    maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
+      // αβ法で最大探索を開始
+      maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
 
-    // 選んだ手に色を付ける
-    this.move = this.move.colored(getColor());
-  }
+      // 選んだ手に色を付ける
+      this.move = this.move.colored(getColor());
+    }
 
-  // 自分の着手を盤面に反映
-  this.board = this.board.placed(this.move);
-  return this.move;
+    // 自分の着手を盤面に反映
+    this.board = this.board.placed(this.move);
+    return this.move;
   }
 
   ////////// ミニマックス法だよ！
