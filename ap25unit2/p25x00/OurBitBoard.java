@@ -57,7 +57,15 @@ public class OurBitBoard  {
 //       return Long.bitCount(bitBoard);
 //   }
 
-  
+    // public OurBoard clone() {
+    //     OurBitBoard copy = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
+    //     copy.currentTurn = this.currentTurn;
+    //     copy.lastMove = this.lastMove != null ? this.lastMove : Move.ofPass(Color.NONE);
+    //     // copy.gameEnded = this.gameEnded;
+    //     // copy.foulColor = this.foulColor;
+    //     return copy;
+    // }
+
   public boolean isEnd() {
       // 合法手がどちらの色にも存在しないかどうかを判定
       return findLegalMoves(Color.BLACK).isEmpty() && findLegalMoves(Color.WHITE).isEmpty();
@@ -177,46 +185,46 @@ public class OurBitBoard  {
     
   
 
-  public OurBitBoard placed(Move move) {
-      OurBitBoard next = (OurBitBoard) this.clone();
-      next.lastMove = move;
-      next.currentTurn = colorFlipped();
+//   public OurBitBoard placed(Move move) {
+//       OurBitBoard next = (OurBitBoard) this.clone();
+//       next.lastMove = move;
+//       next.currentTurn = colorFlipped();
 
-      if (move.isPass() || move.isNone()) return next;
+//       if (move.isPass() || move.isNone()) return next;
 
-      int index = move.getIndex();
-      Color color = move.getColor();
-      long own = (color == Color.BLACK) ? next.bitBoardBlack : next.bitBoardWhite;
-      long opp = (color == Color.BLACK) ? next.bitBoardWhite : next.bitBoardBlack;
+//       int index = move.getIndex();
+//       Color color = move.getColor();
+//       long own = (color == Color.BLACK) ? next.bitBoardBlack : next.bitBoardWhite;
+//       long opp = (color == Color.BLACK) ? next.bitBoardWhite : next.bitBoardBlack;
 
-      long flipped = 0L;
-      int[] directions = {1, -1, 8, -8, 7, -7, 9, -9};
+//       long flipped = 0L;
+//       int[] directions = {1, -1, 8, -8, 7, -7, 9, -9};
 
-      for (int d : directions) {
-          int i = index + d;
-          long line = 0L;
-          while (i >= 0 && i < 36 && isValidMove(index, i, d) && ((opp >>> i) & 1L) != 0) {
-              line |= (1L << i);
-              i += d;
-          }
-          if (i >= 0 && i < 36 && isValidMove(index, i, d) && ((own >>> i) & 1L) != 0) {
-              flipped |= line;
-          }
-      }
+//       for (int d : directions) {
+//           int i = index + d;
+//           long line = 0L;
+//           while (i >= 0 && i < 36 && isValidMove(index, i, d) && ((opp >>> i) & 1L) != 0) {
+//               line |= (1L << i);
+//               i += d;
+//           }
+//           if (i >= 0 && i < 36 && isValidMove(index, i, d) && ((own >>> i) & 1L) != 0) {
+//               flipped |= line;
+//           }
+//       }
 
-      own |= flipped | (1L << index);
-      opp &= ~flipped;
+//       own |= flipped | (1L << index);
+//       opp &= ~flipped;
 
-      if (color == Color.BLACK) {
-          next.bitBoardBlack = own;
-          next.bitBoardWhite = opp;
-      } else {
-          next.bitBoardWhite = own;
-          next.bitBoardBlack = opp;
-      }
+//       if (color == Color.BLACK) {
+//           next.bitBoardBlack = own;
+//           next.bitBoardWhite = opp;
+//       } else {
+//           next.bitBoardWhite = own;
+//           next.bitBoardBlack = opp;
+//       }
 
-      return next;
-  }
+//       return next;
+//   }
 
 //   public OurBitBoard flipped() {
 //       OurBitBoard flipped = new OurBitBoard(bitBoardWhite, bitBoardBlack, bitBoardBlock);
@@ -236,9 +244,9 @@ public class OurBitBoard  {
 //       return copy;
 //   }
 
-  private Color colorFlipped() {
-      return currentTurn.flipped();
-  }
+//   private Color colorFlipped() {
+//       return currentTurn.flipped();
+//   }
 
   public OurBoard encode() {
     Color[] board = new Color[36];
