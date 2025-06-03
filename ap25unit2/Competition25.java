@@ -10,8 +10,8 @@ class Competition25 {
     Function<Color, Player[]> builder = (Color color) -> {
       return new Player[] {
           new p25x00.OurPlayer(color),
-          new myplayer.MyPlayer(color),
-          new ap25.league.RandomPlayer(color),
+          // new myplayer.MyPlayer(color),
+          // new ap25.league.RandomPlayer(color),
           new ap25.league.RandomPlayer(color),
       };
     };
