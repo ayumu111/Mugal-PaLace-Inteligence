@@ -107,14 +107,14 @@ class MyEval {
 }
 
 public class MyPlayer extends ap25.Player {
-  static final String MY_NAME = "MY24";
+  static final String MY_NAME = "2511";
   MyEval eval;          // 評価関数
   int depthLimit;       // 探索の最大深さ
   Move move;            // 選んだ手
   MyBoard board;        // 内部的に使うボード状態（MyBoard型）
 
   public MyPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 4);
+    this(MY_NAME, color, new MyEval(), 7);
   }
 
   public MyPlayer(String name, Color color, MyEval eval, int depthLimit) {
@@ -152,11 +152,21 @@ public class MyPlayer extends ap25.Player {
       var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
       this.move = null;
 
-      // αβ法で最大探索を開始
-      maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
+      // 最上位の合法手リスト
+      var moves = order(newBoard.findLegalMoves(BLACK));
 
-      // 選んだ手に色を付ける
-      this.move = this.move.colored(getColor());
+      // 並列で各手の評価値を計算
+      var results = moves.parallelStream()
+        .map(move -> {
+          var nextBoard = newBoard.placed(move);
+          float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+          return new Object[]{move, value};
+        })
+        .toList();
+
+      // 最大値を持つ手を選ぶ
+      var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
+      this.move = ((Move)best[0]).colored(getColor());
     }
 
     // 自分の着手を盤面に反映

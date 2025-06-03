@@ -2,6 +2,8 @@ import ap25.*;
 import static ap25.Color.*;
 import ap25.league.*;
 import java.util.function.*;
+import myplayer.MyPlayer.*;
+
 
 class Competition25 {
   final static long TIME_LIMIT_SECONDS = 60;
