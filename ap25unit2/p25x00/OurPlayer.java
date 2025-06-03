@@ -134,10 +134,6 @@ public class OurPlayer extends ap25.Player {
     var moves = board.findLegalMoves(BLACK);
     moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
 
-    //                                   111011110001101101011001011111
-    //                            a 10110000100001110010010100110100000
-    // 1111111111111111111111111111101001000000000000000000000000000000
-
     if (depth == 0) {
       this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
     }
