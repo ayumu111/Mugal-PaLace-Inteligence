@@ -98,15 +98,16 @@ public class OurPlayer extends ap25.Player {
     if (this.board.findNoPassLegalIndexes(getColor()).isEmpty()) {
       this.move = Move.ofPass(getColor());
     } else {
-      long bitBoardBlack = this.board.getBitBoard(BLACK);
-      long bitBoardWhite = this.board.getBitBoard(WHITE);
-      long bitBoardBlock = this.board.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
       // 黒番ならそのまま、白番なら反転（白→黒にする）
-      var newBitBoard = isBlack() ? BitBoard.clone() : BitBoard.flipped();
       var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
 
-      var bitmoves = newBitBoard.findLegalMoves(BLACK);
+      long bitBoardBlack = newBoard.getBitBoard(BLACK);
+      long bitBoardWhite = newBoard.getBitBoard(WHITE);
+      long bitBoardBlock = newBoard.getBitBoard(BLOCK);
+      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
+      
+
+      var bitmoves = BitBoard.findLegalMoves(BLACK);
       System.out.println("bitmoves: " + bitmoves);
       this.move = null;
 

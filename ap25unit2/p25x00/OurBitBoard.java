@@ -100,7 +100,7 @@ public class OurBitBoard implements Board {
             for (int d : directions) {
                 int j = i + d;
                 boolean foundOpponent = false;
-                while (j >= 0 && j < 36 && onSameRowOrColumn(i, j, d)) {
+                while (j >= 0 && j < 36 && onSameRowOrColumn(i, d)) {
                     if (((opp >>> j) & 1L) != 0) {
                         foundOpponent = true;
                         j += d;
@@ -122,17 +122,19 @@ public class OurBitBoard implements Board {
     }
     
 
-    private boolean onSameRowOrColumn(int from, int to, int d) {
-        int fromRow = from / 6;
-        int fromCol = from % 6;
-        int toRow = to / 6;
-        int toCol = to % 6;
+    private boolean onSameRowOrColumn(int from, int d) {
 
-        if (d == 1 || d == -1) {
-            return fromRow == toRow;
-        }
-        return true;
+    if (from % 6 == 0 && from < 36) {
+          if (d == -1 || d == -7 || d == 5) return false;
     }
+      // from が 6の倍数 - 1 (5, 11, 17, ..., 35) のときに、d が 1, 7, -5 の場合 false
+      if ((from + 1) % 6 == 0 && from <= 35) {
+          if (d == 1 || d == 7 || d == -5) return false;
+      }
+  
+      return true;
+    }
+  
 
   public Board placed(Move move) {
       OurBitBoard next = (OurBitBoard) this.clone();

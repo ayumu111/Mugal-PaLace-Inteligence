@@ -201,11 +201,11 @@ public class OurBoard implements Board, Cloneable {
 
   public long getBitBoard(Color color) {
     long bitBoard = 0L;
-    // for (int i = 0; i < LENGTH; i++) {
-    //   if (this.board[i] == color) {
-    //     bitBoard |= (1L << i);
-    //   }
-    // }
+    for (int i = 0; i < LENGTH; i++) {
+      if (this.board[i] == color) {
+        bitBoard |= (1L << i);
+      }
+    }
     return bitBoard;
   }
 }
