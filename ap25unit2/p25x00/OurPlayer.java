@@ -91,12 +91,6 @@ public class OurPlayer extends ap25.Player {
     // ここでOurBoardに渡る
     this.board = this.board.placed(board.getMove());
 
-    // System.out.println("取得した盤面:");
-    // System.out.println(this.board);
-    // long start = System.nanoTime();
-    // long end = System.nanoTime();
-    // long elapsedTime = end - start;
-
     if (this.board.findNoPassLegalIndexes(getColor()).isEmpty()) {
       this.move = Move.ofPass(getColor());
     } else {
@@ -108,18 +102,13 @@ public class OurPlayer extends ap25.Player {
       long bitBoardBlock = newBoard.getBitBoard(BLOCK);
       OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
       
-
-      // var bitmoves = BitBoard.findLegalMoves(BLACK);
-      // System.out.println("bitmoves: " + bitmoves);
       this.move = null;
 
       
       var legals = this.board.findNoPassLegalIndexes(getColor());
-      var moves = board.findLegalMoves(BLACK);
       maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
 
       this.move = this.move.colored(getColor());
-
 
       if (legals.contains(this.move.getIndex()) == false) {
         System.out.println("**************");
@@ -130,15 +119,9 @@ public class OurPlayer extends ap25.Player {
         System.exit(0);
       }
     }
-    
-    // end = System.nanoTime();
-    // elapsedTime = end - start;
-    // System.out.printf("Elapsed time: %d ms%n", elapsedTime / 1_000_000);
 
     this.board = this.board.placed(this.move);
-    // System.out.println("move: " + this.move);
-    // System.out.println("出力した盤面:");
-    // System.out.println(this.board);
+
     return this.move;
   }
 
@@ -156,9 +139,7 @@ public class OurPlayer extends ap25.Player {
     // 1111111111111111111111111111101001000000000000000000000000000000
 
     if (depth == 0) {
-      this.move = moves.get(0);  
-     
-      // 最上位では候補として仮に最初の手を選ぶ
+      this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
     }
     for (var move: moves) {
       // ローカルの盤面に手を置く
