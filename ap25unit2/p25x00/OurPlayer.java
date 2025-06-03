@@ -29,26 +29,81 @@ class MyEval {
       { 12,  -8,  2,  2,  -8,  12},
       { 30,  12, 12, 12,  12,  30},
   };
+  static final float[][] M_LATE = {
+      { 50,  20, 20, 20,  20,  50},
+      { 20,   0,  5,  5,   0,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   0,  5,  5,   0,  20},
+      { 50,  20, 20, 20,  20,  50},
+  };
 
+  // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
   public float value(Board board) {
     if (board.isEnd()) return 1000000 * board.score();
+    float psi = (float) IntStream.range(0, LENGTH)
+    .mapToDouble(k -> score(board, k))
+    .reduce(Double::sum).orElse(0);
 
-    return (float) IntStream.range(0, LENGTH)
-      .mapToDouble(k -> score(board, k))
-      .reduce(Double::sum).orElse(0);
+    int lb = board.findLegalMoves(BLACK).size();
+    int lw = board.findLegalMoves(WHITE).size();
+
+    // 黒と白の石の数に応じてスコアを調整
+    int nb = board.count(Color.BLACK);
+    int nw = board.count(Color.WHITE);
+
+    float w1 = getw1(board);
+    float w2 = getw2(board);
+    float w3 = getw3(board);
+    float w4 = getw4(board);
+    float w5 = getw5(board);
+
+    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
   }
 
+  float getw1(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 100; // 序盤
+    if (stoneCount < 24) return 50; // 中盤
+    return 10; // 終盤
+  }
+
+  float getw2(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 10; // 序盤
+    if (stoneCount < 24) return 20; // 中盤
+    return 1; // 終盤
+  }
+  float getw3(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return -10; // 序盤
+    if (stoneCount < 24) return -20; // 中盤
+    return -1; // 終盤
+  }
+  float getw4(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return 1; // 序盤
+    if (stoneCount < 24) return 5; // 中盤
+    return 100; // 終盤
+  }
+  float getw5(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return -1; // 序盤
+    if (stoneCount < 24) return -5; // 中盤
+    return -100; // 終盤
+  }
+  // 進行状況に応じて重み配列を返す
+  float[][] getM(Board board) {
+    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+    if (stoneCount < 12) return M_EARLY; // 序盤
+    if (stoneCount < 24) return M_MIDDLE; // 中盤
+    return M_LATE; // 終盤
+  }
+
+  // 特定のマス（k）のスコア計算：盤面の色値×重み
   float score(Board board, int k) {
     float[][] M = getM(board);
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
-  }
-
-  // 進行状況に応じて重み配列を返す
-  float[][] getM(Board board) {
-    int stoneCount = board.count(BLACK) + board.count(WHITE);
-    if (stoneCount < 12) return M_EARLY;   // 序盤
-    if (stoneCount < 24) return M_MIDDLE;  // 中盤
-    return M_MIDDLE;                       // 終盤（必要ならM_LATEに変更可）
   }
 }
 
@@ -61,7 +116,7 @@ public class OurPlayer extends ap25.Player {
   OurBoard board;
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 4);
+    this(MY_NAME, color, new MyEval(), 6);
   }
 
   // コンストラクタ（詳細指定）
@@ -90,31 +145,34 @@ public class OurPlayer extends ap25.Player {
     // 相手の着手を反映
     this.board = this.board.placed(board.getMove());
 
-    if (this.board.findNoPassLegalIndexes(getColor()).isEmpty()) {
+    // 合法手がなければパス
+    var legalIndexes = this.board.findNoPassLegalIndexes(getColor());
+    if (legalIndexes.isEmpty()) {
       this.move = Move.ofPass(getColor());
-    } else {
-      // 黒番ならそのまま、白番なら反転（白→黒にする）
-      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
-      this.move = null;
-
-      var legals = this.board.findNoPassLegalIndexes(getColor());
-
-      maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
-
-      this.move = this.move.colored(getColor());
-
-      if (legals.contains(this.move.getIndex()) == false) {
-        System.out.println("**************");
-        System.out.println(legals);
-        System.out.println(this.move);
-        System.out.println(this.move.getIndex());
-        System.out.println(this.board);
-        System.out.println(newBoard);
-        System.exit(0);
-        maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
-      }
+      this.board = this.board.placed(this.move);
+      return this.move;
     }
 
+    // 黒番ならそのまま、白番なら盤面反転
+    var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+
+    // 合法手リストをMove型に変換
+    var moves = newBoard.findLegalMoves(BLACK);
+
+    // 並列で各手の評価値を計算
+    var results = moves.parallelStream()
+      .map(move -> {
+        var nextBoard = newBoard.placed(move);
+        float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+        return new Object[]{move, value};
+      })
+      .toList();
+
+    // 最大値を持つ手を選ぶ
+    var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
+    this.move = ((Move)best[0]).colored(getColor());
+
+    // 自分の着手を盤面に反映
     this.board = this.board.placed(this.move);
     return this.move;
   }
