@@ -88,16 +88,31 @@ public class OurPlayer extends ap25.Player {
   // 思考メソッド
   public Move think(Board board) {
     // 相手の着手を反映
+    // ここでOurBoardに渡る
     this.board = this.board.placed(board.getMove());
+    
+    // long start = System.nanoTime();
+    // long end = System.nanoTime();
+    // long elapsedTime = end - start;
 
     if (this.board.findNoPassLegalIndexes(getColor()).isEmpty()) {
       this.move = Move.ofPass(getColor());
     } else {
+      long bitBoardBlack = this.board.getBitBoard(BLACK);
+      long bitBoardWhite = this.board.getBitBoard(WHITE);
+      long bitBoardBlock = this.board.getBitBoard(BLOCK);
+      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
       // 黒番ならそのまま、白番なら反転（白→黒にする）
+      var newBitBoard = isBlack() ? BitBoard.clone() : BitBoard.flipped();
       var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+
+      var bitmoves = newBitBoard.findLegalMoves(BLACK);
+      System.out.println("bitmoves: " + bitmoves);
       this.move = null;
 
+      
       var legals = this.board.findNoPassLegalIndexes(getColor());
+
 
       maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
 
@@ -114,11 +129,16 @@ public class OurPlayer extends ap25.Player {
         maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
       }
     }
+    
+    // end = System.nanoTime();
+    // elapsedTime = end - start;
+    // System.out.printf("Elapsed time: %d ms%n", elapsedTime / 1_000_000);
 
     this.board = this.board.placed(this.move);
     return this.move;
   }
 
+  ////////////////////////////////// αβ法開始
   float maxSearch(Board board, float alpha, float beta, int depth) {
     if (isTerminal(board, depth)) return this.eval.value(board);
 
@@ -161,7 +181,7 @@ public class OurPlayer extends ap25.Player {
 
     return beta;
   }
-
+  ////////////////////////////////// αβ法終了
   boolean isTerminal(Board board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
   }
