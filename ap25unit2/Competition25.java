@@ -6,7 +6,7 @@ import myplayer.MyPlayer.*;
 
 
 class Competition25 {
-  final static long TIME_LIMIT_SECONDS = 60;
+  final static long TIME_LIMIT_SECONDS = 72;
 
   public static void main(String args[]) {
     Function<Color, Player[]> builder = (Color color) -> {
@@ -18,7 +18,7 @@ class Competition25 {
       };
     };
 
-    var league = new League(5, builder, TIME_LIMIT_SECONDS);
+    var league = new League(10, builder, TIME_LIMIT_SECONDS);
     league.run();
   }
 

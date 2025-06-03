@@ -116,7 +116,7 @@ public class OurPlayer extends ap25.Player {
   OurBoard board;
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 6);
+    this(MY_NAME, color, new MyEval(), 3);
   }
 
   // コンストラクタ（詳細指定）
