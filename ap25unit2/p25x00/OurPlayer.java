@@ -160,43 +160,43 @@ public class OurPlayer extends ap25.Player {
      
       // 最上位では候補として仮に最初の手を選ぶ
     }
-    // for (var move: moves) {
-    //   // ローカルの盤面に手を置く
-    //   var newBoard = board.placed(move);
-    //   // ローカルの盤面に置いた状態で最小値ほうに移行
-    //   float v = minSearch(newBoard, alpha, beta, depth + 1);
+    for (var move: moves) {
+      // ローカルの盤面に手を置く
+      var newBoard = board.placed(move);
+      // ローカルの盤面に置いた状態で最小値ほうに移行
+      float v = minSearch(newBoard, alpha, beta, depth + 1);
 
-    //   if (v > alpha) {
-    //     alpha = v;
-    //     if (depth == 0)
-    //       this.move = move;  // 最良手を更新
-    //   }
+      if (v > alpha) {
+        alpha = v;
+        if (depth == 0)
+          this.move = move;  // 最良手を更新
+      }
 
-    //   if (alpha >= beta)  // 枝刈り条件
-    //     break;
-    // }
+      if (alpha >= beta)  // 枝刈り条件
+        break;
+    }
 
     return alpha;
   }
 
   // αβ法（最小化側）
-  // float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
-  //   if (isTerminal(board, depth)) {
-  //     return this.eval.value(board.encode());
-  //   }
+  float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) {
+      return this.eval.value(board.encode());
+    }
 
-  //   var moves = board.findLegalMoves(WHITE);
-  //   moves = order(moves);
+    var moves = board.findLegalMoves(WHITE);
+    moves = order(moves);
 
-  //   for (var move: moves) {
-  //     var newBoard = board.placed(move);
-  //     float v = maxSearch(newBoard, alpha, beta, depth + 1);
-  //     beta = Math.min(beta, v);
-  //     if (alpha >= beta) break;
-  //   }
+    for (var move: moves) {
+      var newBoard = board.placed(move);
+      float v = maxSearch(newBoard, alpha, beta, depth + 1);
+      beta = Math.min(beta, v);
+      if (alpha >= beta) break;
+    }
 
-  //   return beta;
-  // }
+    return beta;
+  }
   //////////////////////////////// αβ法終了
   boolean isTerminal(OurBitBoard board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
