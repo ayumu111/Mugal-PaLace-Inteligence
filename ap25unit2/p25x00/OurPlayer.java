@@ -127,9 +127,7 @@ public class OurPlayer extends ap25.Player {
         System.out.println(this.move);
         System.out.println(this.move.getIndex());
         System.out.println(this.board);
-        System.out.println(newBoard);
         System.exit(0);
-        maxSearch(newBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
       }
     }
     
@@ -145,37 +143,47 @@ public class OurPlayer extends ap25.Player {
   }
 
   ////////////////////////////////// αβ法開始
-  float maxSearch(Board board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) return this.eval.value(board);
+  float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) {
+      return this.eval.value(board.encode());
+    }
 
     var moves = board.findLegalMoves(BLACK);
     moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
 
-    if (depth == 0)
-      this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
+    //                                   111011110001101101011001011111
+    //                            a 10110000100001110010010100110100000
+    // 1111111111111111111111111111101001000000000000000000000000000000
 
-    // for (var move: moves) {
-    //   // ローカルの盤面に手を置く
-    //   var newBoard = board.placed(move);
-    //   // ローカルの盤面に置いた状態で最小値ほうに移行
-    //   float v = minSearch(newBoard, alpha, beta, depth + 1);
+    if (depth == 0) {
+      this.move = moves.get(0);  
+     
+      // 最上位では候補として仮に最初の手を選ぶ
+    }
+    for (var move: moves) {
+      // ローカルの盤面に手を置く
+      var newBoard = board.placed(move);
+      // ローカルの盤面に置いた状態で最小値ほうに移行
+      float v = minSearch(newBoard, alpha, beta, depth + 1);
 
-    //   if (v > alpha) {
-    //     alpha = v;
-    //     if (depth == 0)
-    //       this.move = move;  // 最良手を更新
-    //   }
+      if (v > alpha) {
+        alpha = v;
+        if (depth == 0)
+          this.move = move;  // 最良手を更新
+      }
 
-    //   if (alpha >= beta)  // 枝刈り条件
-    //     break;
-    // }
+      if (alpha >= beta)  // 枝刈り条件
+        break;
+    }
 
     return alpha;
   }
 
   // αβ法（最小化側）
-  float minSearch(Board board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) return this.eval.value(board);
+  float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) {
+      return this.eval.value(board.encode());
+    }
 
     var moves = board.findLegalMoves(WHITE);
     moves = order(moves);
@@ -189,8 +197,8 @@ public class OurPlayer extends ap25.Player {
 
     return beta;
   }
-  ////////////////////////////////// αβ法終了
-  boolean isTerminal(Board board, int depth) {
+  //////////////////////////////// αβ法終了
+  boolean isTerminal(OurBitBoard board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
   }
 
