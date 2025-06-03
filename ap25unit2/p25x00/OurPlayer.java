@@ -42,11 +42,19 @@ class MyEval {
     float[][] M = getM(board);
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
+
+  // 進行状況に応じて重み配列を返す
+  float[][] getM(Board board) {
+    int stoneCount = board.count(BLACK) + board.count(WHITE);
+    if (stoneCount < 12) return M_EARLY;   // 序盤
+    if (stoneCount < 24) return M_MIDDLE;  // 中盤
+    return M_MIDDLE;                       // 終盤（必要ならM_LATEに変更可）
+  }
 }
 
 // プレイヤークラス
 public class OurPlayer extends ap25.Player {
-  static final String MY_NAME = "2400";
+  static final String MY_NAME = "2511";
   MyEval eval;
   int depthLimit;
   Move move;

@@ -107,14 +107,14 @@ class MyEval {
 }
 
 public class MyPlayer extends ap25.Player {
-  static final String MY_NAME = "2511";
+  static final String MY_NAME = "MY25";
   MyEval eval;          // 評価関数
   int depthLimit;       // 探索の最大深さ
   Move move;            // 選んだ手
   MyBoard board;        // 内部的に使うボード状態（MyBoard型）
 
   public MyPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 7);
+    this(MY_NAME, color, new MyEval(), 4);
   }
 
   public MyPlayer(String name, Color color, MyEval eval, int depthLimit) {
