@@ -198,7 +198,9 @@ public class OurBoard implements Board, Cloneable {
     b.move = this.move.flipped();
     return b;
   }
-
+// 111110011110011111100000110000100000
+// 000000000000000000011111001111011110
+// 000000100001100000000000000000000001
   public long getBitBoard(Color color) {
     long bitBoard = 0L;
     for (int i = 0; i < LENGTH; i++) {

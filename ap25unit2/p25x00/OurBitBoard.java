@@ -94,13 +94,19 @@ public class OurBitBoard implements Board {
         long empty = ~(bitBoardBlack | bitBoardWhite | bitBoardBlock);
 
         int[] directions = {1, -1, 6, -6, 7, -7, 5, -5};
-
+        // 盤面の各マスをチェック
+        System.out.println("Finding legal moves for color: " + color);
+        System.out.println(Long.toBinaryString(own));
+        System.out.println(Long.toBinaryString(opp));
+        System.out.println(Long.toBinaryString(empty));
         for (int i = 0; i < 36; i++) {
             if (((empty >>> i) & 1L) == 0) continue;
+        
             for (int d : directions) {
                 int j = i + d;
                 boolean foundOpponent = false;
-                while (j >= 0 && j < 36 && onSameRowOrColumn(i, d)) {
+        
+                while (j >= 0 && j < 36 && isValidMove(i, j, d)) {
                     if (((opp >>> j) & 1L) != 0) {
                         foundOpponent = true;
                         j += d;
@@ -115,25 +121,42 @@ public class OurBitBoard implements Board {
                 }
             }
         }
+        
         if (legalMoves.isEmpty()) {
             legalMoves.add(Move.ofPass(color));
         }
+
+        System.out.println("Legal moves for " + legalMoves);
         return legalMoves;
     }
     
 
-    private boolean onSameRowOrColumn(int from, int d) {
-
-    if (from % 6 == 0 && from < 36) {
-          if (d == -1 || d == -7 || d == 5) return false;
+    private boolean isValidMove(int from, int to, int direction) {
+        // 盤面外チェック
+        if (to < 0 || to >= 36) return false;
+    
+        // 横方向の折り返し禁止
+        int fromRow = from / 6;
+        int toRow = to / 6;
+    
+        if (direction == 1 || direction == -1) {
+            // 左右移動なら同じ行でなければアウト
+            return fromRow == toRow;
+        }
+    
+        if (direction == 7 || direction == -5) {
+            // 右上／左下 斜め移動：from < to のとき、行番号が +1 されていること
+            return Math.abs(from - to) % 7 == 0 && Math.abs(fromRow - toRow) == Math.abs((from - to) / 7);
+        }
+    
+        if (direction == 5 || direction == -7) {
+            // 左上／右下 斜め移動：from < to のとき、行番号が +1 されていること
+            return Math.abs(from - to) % 5 == 0 && Math.abs(fromRow - toRow) == Math.abs((from - to) / 5);
+        }
+    
+        return true; // 縦方向（±6）は行番号変化OK
     }
-      // from が 6の倍数 - 1 (5, 11, 17, ..., 35) のときに、d が 1, 7, -5 の場合 false
-      if ((from + 1) % 6 == 0 && from <= 35) {
-          if (d == 1 || d == 7 || d == -5) return false;
-      }
-  
-      return true;
-    }
+    
   
 
   public Board placed(Move move) {
@@ -154,11 +177,11 @@ public class OurBitBoard implements Board {
       for (int d : directions) {
           int i = index + d;
           long line = 0L;
-          while (i >= 0 && i < 36 && onSameRowOrColumn(index, d) && ((opp >>> i) & 1L) != 0) {
+          while (i >= 0 && i < 36 && isValidMove(index, i, d) && ((opp >>> i) & 1L) != 0) {
               line |= (1L << i);
               i += d;
           }
-          if (i >= 0 && i < 36 && onSameRowOrColumn(index, d) && ((own >>> i) & 1L) != 0) {
+          if (i >= 0 && i < 36 && isValidMove(index, i, d) && ((own >>> i) & 1L) != 0) {
               flipped |= line;
           }
       }
