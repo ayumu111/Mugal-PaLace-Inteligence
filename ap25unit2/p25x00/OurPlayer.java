@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
+import javax.swing.border.Border;
+
 import ap25.*;
 
 // 評価関数クラス
@@ -115,6 +117,25 @@ class MyEval {
     int nb = board.count(Color.BLACK);
     int nw = board.count(Color.WHITE);
 
+    // 角に関するパラメータ
+    int corner = board.get(0).getValue() + board.get(5).getValue() + board.get(30).getValue() + board.get(35).getValue();
+    int MyCorner = 
+    (board.get(0).getValue() == 1 ? 1 : 0) +
+    (board.get(5).getValue() == 1 ? 1 : 0) +
+    (board.get(30).getValue() == 1 ? 1 : 0) +
+    (board.get(35).getValue() == 1 ? 1 : 0);
+    int EnemyCorner = 
+    (board.get(0).getValue() == -1 ? 1 : 0) +
+    (board.get(5).getValue() == -1 ? 1 : 0) +
+    (board.get(30).getValue() == -1 ? 1 : 0) +
+    (board.get(35).getValue() == -1 ? 1 : 0);
+    int BlockCorner =
+    (board.get(0).getValue() == 3 ? 1 : 0) +
+    (board.get(5).getValue() == 3 ? 1 : 0) +
+    (board.get(30).getValue() == 3 ? 1 : 0) +
+    (board.get(35).getValue() == 3 ? 1 : 0);
+    
+
     //重み探索用
     // float w1 = getw1(board);
     // float w2 = getw2(board);
@@ -128,8 +149,12 @@ class MyEval {
     float w3 = 0;
     float w4 = 0;
     float w5 = 0;
+    float w6 = 0;
+    float w7 = 0;
+    float w8 = 0;
+    float w9 = 0;
 
-    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
+    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw + w6*corner + w7*MyCorner + w8*EnemyCorner + w9*BlockCorner; // 黒番ならプラス、白番ならマイナス
   }
 
   // 評価関数の重みを外部からセットできるようにする
