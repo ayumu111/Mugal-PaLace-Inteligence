@@ -1,4 +1,4 @@
-package p25x00;
+package enemy7;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -165,14 +165,14 @@ class MyEval {
 
 // プレイヤークラス
 public class OurPlayer extends ap25.Player {
-  static final String MY_NAME = "2511";
+  static final String MY_NAME = "enemy7";
   MyEval eval;
   int depthLimit;
   Move move;
   OurBoard board;
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 6);
+    this(MY_NAME, color, new MyEval(color), 4);
   }
 
   // コンストラクタ（詳細指定）
@@ -204,46 +204,26 @@ public class OurPlayer extends ap25.Player {
   // 思考メソッド
   public Move think(Board board) {
     // 相手の着手を反映
-    // ここでOurBoardに渡る
     this.board = this.board.placed(board.getMove());
 
     // 合法手がなければパス
     var legalIndexes = this.board.findNoPassLegalIndexes(getColor());
     if (legalIndexes.isEmpty()) {
       this.move = Move.ofPass(getColor());
-    } else {
-      // 黒番ならそのまま、白番なら反転（白→黒にする）
-      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+      this.board = this.board.placed(this.move);
+      return this.move;
+    }
 
-      long bitBoardBlack = newBoard.getBitBoard(BLACK);
-      long bitBoardWhite = newBoard.getBitBoard(WHITE);
-      long bitBoardBlock = newBoard.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
-      
-      this.move = null;
+    // 黒番ならそのまま、白番なら盤面反転
+    var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
 
-      
-      var legals = this.board.findNoPassLegalIndexes(getColor());
-      maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
-
-      this.move = this.move.colored(getColor());
-
-      if (legals.contains(this.move.getIndex()) == false) {
-        System.out.println("**************");
-        System.out.println(legals);
-        System.out.println(this.move);
-        System.out.println(this.move.getIndex());
-        System.out.println(this.board);
-        System.exit(0);
-      }
-     
     // 合法手リストをMove型に変換
     var moves = newBoard.findLegalMoves(BLACK);
 
     // 並列で各手の評価値を計算
     var results = moves.parallelStream()
       .map(move -> {
-        var nextBoard = BitBoard.placed(move);
+        var nextBoard = newBoard.placed(move);
         float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
         return new Object[]{move, value};
       })
@@ -254,32 +234,21 @@ public class OurPlayer extends ap25.Player {
     this.move = ((Move)best[0]).colored(getColor());
 
     // 自分の着手を盤面に反映
-
-    
-    
-
-    }
     this.board = this.board.placed(this.move);
-
     return this.move;
   }
 
-  ////////////////////////////////// αβ法開始
-  float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) {
-      return this.eval.value(board.encode());
-    }
+  float maxSearch(Board board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(BLACK);
     moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
 
-    if (depth == 0) {
+    if (depth == 0)
       this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
-    }
+
     for (var move: moves) {
-      // ローカルの盤面に手を置く
       var newBoard = board.placed(move);
-      // ローカルの盤面に置いた状態で最小値ほうに移行
       float v = minSearch(newBoard, alpha, beta, depth + 1);
 
       if (v > alpha) {
@@ -296,10 +265,8 @@ public class OurPlayer extends ap25.Player {
   }
 
   // αβ法（最小化側）
-  float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) {
-      return this.eval.value(board.encode());
-    }
+  float minSearch(Board board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(WHITE);
     moves = order(moves);
@@ -313,8 +280,8 @@ public class OurPlayer extends ap25.Player {
 
     return beta;
   }
-  //////////////////////////////// αβ法終了
-  boolean isTerminal(OurBitBoard board, int depth) {
+
+  boolean isTerminal(Board board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
   }
 
