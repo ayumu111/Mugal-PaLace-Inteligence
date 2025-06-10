@@ -118,7 +118,7 @@ public class Game {
       result = String.format("%-4s won by %-2d", getWinner(board), score);
 
     var s = toString() + " -> " + result + "\t| " + toString(moves);
-    // System.out.println(s);
+    System.out.println(s);
   }
 
   public String toString() {
