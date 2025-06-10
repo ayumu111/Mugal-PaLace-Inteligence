@@ -28,6 +28,7 @@ class Competition25 {
           new enemy12.OurPlayer(color),
           // new ap25.league.RandomPlayer(color),
           // new ap25.league.RandomPlayer(color),
+
       };
     };
 
