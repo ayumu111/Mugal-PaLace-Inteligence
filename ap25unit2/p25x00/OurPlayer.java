@@ -270,7 +270,7 @@ public class OurPlayer extends ap25.Player {
       }
 
     
-    
+      
 
     }
     this.board = this.board.placed(this.move);
@@ -293,21 +293,28 @@ public class OurPlayer extends ap25.Player {
     }
 
     var moves = board.findLegalMoves(BLACK);
-    moves = order(moves);
+    // 評価値でソート
+    moves = orderByEval(moves, board, true);
 
     float best = Float.NEGATIVE_INFINITY;
     Move bestMove = null;
-    for (var move: moves) {
-      var newBoard = board.placed(move);
-      float v = minSearch(newBoard, alpha, beta, depth + 1);
-      if (v > best) {
-        best = v;
-        if (depth == 0) bestMove = move; // ←ここで最上位の手を保存
-      }
-      alpha = Math.max(alpha, v);
-      if (alpha >= beta) break;
+    int n = moves.size();
+    for (int i = 0; i < n; i++) {
+        var move = moves.get(i);
+        var newBoard = board.placed(move);
+
+        // 良い手ほど深く探索（例: 最良手は+2, 2番目は+1, それ以降は通常）
+        int extraDepth = Math.max(0, 2 - i); // 1番目+2, 2番目+1, それ以降+0
+        float v = minSearch(newBoard, alpha, beta, depth + 1 + extraDepth);
+
+        if (v > best) {
+            best = v;
+            if (depth == 0) bestMove = move;
+        }
+        alpha = Math.max(alpha, v);
+        if (alpha >= beta) break;
     }
-    if (depth == 0 && bestMove != null) this.move = bestMove; // ←ここでセット
+    if (depth == 0 && bestMove != null) this.move = bestMove;
     transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
     return best;
   }
@@ -319,13 +326,18 @@ public class OurPlayer extends ap25.Player {
     }
 
     var moves = board.findLegalMoves(WHITE);
-    moves = order(moves);
+    moves = orderByEval(moves, board, false);
 
-    for (var move: moves) {
-      var newBoard = board.placed(move);
-      float v = maxSearch(newBoard, alpha, beta, depth + 1);
-      beta = Math.min(beta, v);
-      if (alpha >= beta) break;
+    int n = moves.size();
+    for (int i = 0; i < n; i++) {
+        var move = moves.get(i);
+        var newBoard = board.placed(move);
+
+        int extraDepth = Math.max(0, 2 - i); // 1番目+2, 2番目+1, それ以降+0
+        float v = maxSearch(newBoard, alpha, beta, depth + 1 + extraDepth);
+
+        beta = Math.min(beta, v);
+        if (alpha >= beta) break;
     }
 
     return beta;
@@ -341,7 +353,31 @@ public class OurPlayer extends ap25.Player {
     return shuffled;
   }
 
-  public static void setEvalWeights(float w1, float w2, float w3, float w4, float w5) {
-    MyEval.setEvalWeights(w1, w2, w3, w4, w5);
-  }
+  List<Move> order(List<Move> moves, OurBitBoard board, boolean isBlack) {
+    // 各手ごとに評価関数の値で降順ソート
+    return moves.stream()
+        .sorted((a, b) -> {
+            // それぞれの手を打った後の盤面を生成
+            OurBitBoard boardA = board.placed(a);
+            OurBitBoard boardB = board.placed(b);
+            // 評価値を計算（自分の色で評価）
+            float evalA = this.eval.value(boardA.encode());
+            float evalB = this.eval.value(boardB.encode());
+            return Float.compare(evalB, evalA); // 評価値が高い順
+        })
+        .toList();
+}
+
+  // 評価値付きでMoveをソートして返す
+  List<Move> orderByEval(List<Move> moves, OurBitBoard board, boolean isBlack) {
+    return moves.stream()
+        .map(move -> {
+            OurBitBoard next = board.placed(move);
+            float eval = this.eval.value(next.encode());
+            return new Object[]{move, eval};
+        })
+        .sorted((a, b) -> Float.compare((float)b[1], (float)a[1])) // 降順
+        .map(a -> (Move)a[0])
+        .toList();
+}
 }

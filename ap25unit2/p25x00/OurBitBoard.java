@@ -204,4 +204,60 @@ public class OurBitBoard  {
     public long hash() {
         return bitBoardBlack ^ (bitBoardWhite << 21) ^ (bitBoardBlock << 42);
     }
+
+// Colorのopposite()メソッドが無い場合の対応
+// 補助メソッドを追加
+private Color opposite(Color color) {
+    if (color == Color.BLACK) return Color.WHITE;
+    if (color == Color.WHITE) return Color.BLACK;
+    return color;
+}
+
+// 指定した手(move)を打ったときにひっくり返せる石の数を返す
+public int countFlippedStones(Move move, Color color) {
+    int total = 0;
+    int index = move.getIndex();
+    // 8方向すべて調べる
+    for (int dir = 0; dir < 8; dir++) {
+        int flipped = countFlippedInDirection(index, dir, color);
+        total += flipped;
+    }
+    return total;
+}
+
+// 1方向にひっくり返せる石の数を返す
+private int countFlippedInDirection(int index, int dir, Color color) {
+    int count = 0;
+    int x = index % 6;
+    int y = index / 6;
+    int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
+    int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
+    x += dx[dir];
+    y += dy[dir];
+    boolean foundOpponent = false;
+    while (x >= 0 && x < 6 && y >= 0 && y < 6) {
+        int idx = y * 6 + x;
+        Color c = getColorAt(idx);
+        if (c == opposite(color)) { // 修正: color.opposite() → opposite(color)
+            foundOpponent = true;
+            count++;
+        } else if (c == color) {
+            return foundOpponent ? count : 0;
+        } else {
+            break;
+        }
+        x += dx[dir];
+        y += dy[dir];
+    }
+    return 0;
+}
+
+// 指定インデックスの色を取得する補助メソッド
+private Color getColorAt(int index) {
+    // 盤面のビットボードから色を取得
+    if (((bitBoardBlack >> index) & 1L) != 0) return Color.BLACK;
+    if (((bitBoardWhite >> index) & 1L) != 0) return Color.WHITE;
+    if (((bitBoardBlock >> index) & 1L) != 0) return Color.BLOCK;
+    return Color.NONE;
+}
 }
