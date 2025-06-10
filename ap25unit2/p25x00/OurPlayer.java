@@ -116,7 +116,7 @@ public class OurPlayer extends ap25.Player {
   OurBoard board;
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(), 3);
+    this(MY_NAME, color, new MyEval(), 6);
   }
 
   // コンストラクタ（詳細指定）
@@ -143,65 +143,40 @@ public class OurPlayer extends ap25.Player {
   // 思考メソッド
   public Move think(Board board) {
     // 相手の着手を反映
-    // ここでOurBoardに渡る
     this.board = this.board.placed(board.getMove());
 
     // 合法手がなければパス
     var legalIndexes = this.board.findNoPassLegalIndexes(getColor());
     if (legalIndexes.isEmpty()) {
-      this.move = Move.ofPass(getColor());
+        this.move = Move.ofPass(getColor());
     } else {
-      // 黒番ならそのまま、白番なら反転（白→黒にする）
-      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+        // 黒番ならそのまま、白番なら反転（白→黒にする）
+        var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
 
-      long bitBoardBlack = newBoard.getBitBoard(BLACK);
-      long bitBoardWhite = newBoard.getBitBoard(WHITE);
-      long bitBoardBlock = newBoard.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
-      
-      this.move = null;
+        long bitBoardBlack = newBoard.getBitBoard(BLACK);
+        long bitBoardWhite = newBoard.getBitBoard(WHITE);
+        long bitBoardBlock = newBoard.getBitBoard(BLOCK);
+        OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
 
-      
-      var legals = this.board.findNoPassLegalIndexes(getColor());
-      maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
+        // 合法手リストをMove型に変換
+        var moves = newBoard.findLegalMoves(BLACK);
 
-      this.move = this.move.colored(getColor());
+        // 並列で各手の評価値を計算（maxSearchを使う）
+        var results = moves.parallelStream()
+            .map(move -> {
+                var nextBoard = BitBoard.placed(move);
+                float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+                return new Object[]{move, value};
+            })
+            .toList();
 
-      if (legals.contains(this.move.getIndex()) == false) {
-        System.out.println("**************");
-        System.out.println(legals);
-        System.out.println(this.move);
-        System.out.println(this.move.getIndex());
-        System.out.println(this.board);
-        System.exit(0);
-      }
-     
-    // 合法手リストをMove型に変換
-    var moves = newBoard.findLegalMoves(BLACK);
-
-    // 並列で各手の評価値を計算
-    var results = moves.parallelStream()
-      .map(move -> {
-        var nextBoard = BitBoard.placed(move);
-        float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
-        return new Object[]{move, value};
-      })
-      .toList();
-
-    // 最大値を持つ手を選ぶ
-    var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
-    this.move = ((Move)best[0]).colored(getColor());
-
-    // 自分の着手を盤面に反映
-
-    
-    
-
+        // 最大値を持つ手を選ぶ
+        var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
+        this.move = ((Move)best[0]).colored(getColor());
     }
     this.board = this.board.placed(this.move);
-
     return this.move;
-  }
+}
 
   ////////////////////////////////// αβ法開始
   float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
@@ -223,8 +198,6 @@ public class OurPlayer extends ap25.Player {
 
       if (v > alpha) {
         alpha = v;
-        if (depth == 0)
-          this.move = move;  // 最良手を更新
       }
 
       if (alpha >= beta)  // 枝刈り条件
