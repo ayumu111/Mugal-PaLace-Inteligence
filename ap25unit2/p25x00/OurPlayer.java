@@ -6,6 +6,7 @@ import static ap25.Color.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 import ap25.*;
@@ -171,8 +172,21 @@ public class OurPlayer extends ap25.Player {
   Move move;
   OurBoard board;
 
+  // トランスポジションテーブル（盤面ハッシュ→ノード情報）
+  static ConcurrentHashMap<Long, NodeInfo> transTable = new ConcurrentHashMap<>();
+
+  static class NodeInfo {
+    float value;
+    int depth;
+    // 必要ならMoveやαβ値も追加
+    NodeInfo(float value, int depth) {
+      this.value = value;
+      this.depth = depth;
+    }
+  }
+
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 6);
+    this(MY_NAME, color, new MyEval(color), 7);
   }
 
   // コンストラクタ（詳細指定）
@@ -226,19 +240,12 @@ public class OurPlayer extends ap25.Player {
       var legals = this.board.findNoPassLegalIndexes(getColor());
       maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
 
-      this.move = this.move.colored(getColor());
 
-      if (legals.contains(this.move.getIndex()) == false) {
-        System.out.println("**************");
-        System.out.println(legals);
-        System.out.println(this.move);
-        System.out.println(this.move.getIndex());
-        System.out.println(this.board);
-        System.exit(0);
-      }
+      
+     
      
     // 合法手リストをMove型に変換
-    var moves = newBoard.findLegalMoves(BLACK);
+    var moves = BitBoard.findLegalMoves(BLACK);
 
     // 並列で各手の評価値を計算
     var results = moves.parallelStream()
@@ -253,7 +260,14 @@ public class OurPlayer extends ap25.Player {
     var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
     this.move = ((Move)best[0]).colored(getColor());
 
-    // 自分の着手を盤面に反映
+     if (legals.contains(this.move.getIndex()) == false) {
+        System.out.println("**************");
+        System.out.println(legals);
+        System.out.println(this.move);
+        System.out.println(this.move.getIndex());
+        System.out.println(this.board);
+        System.exit(0);
+      }
 
     
     
@@ -266,33 +280,36 @@ public class OurPlayer extends ap25.Player {
 
   ////////////////////////////////// αβ法開始
   float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
+    long hash = board.hash();
+    NodeInfo info = transTable.get(hash);
+    if (info != null && info.depth >= this.depthLimit - depth) {
+        return info.value;
+    }
+
     if (isTerminal(board, depth)) {
-      return this.eval.value(board.encode());
+      float v = this.eval.value(board.encode());
+      transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
+      return v;
     }
 
     var moves = board.findLegalMoves(BLACK);
-    moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
+    moves = order(moves);
 
-    if (depth == 0) {
-      this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
-    }
+    float best = Float.NEGATIVE_INFINITY;
+    Move bestMove = null;
     for (var move: moves) {
-      // ローカルの盤面に手を置く
       var newBoard = board.placed(move);
-      // ローカルの盤面に置いた状態で最小値ほうに移行
       float v = minSearch(newBoard, alpha, beta, depth + 1);
-
-      if (v > alpha) {
-        alpha = v;
-        if (depth == 0)
-          this.move = move;  // 最良手を更新
+      if (v > best) {
+        best = v;
+        if (depth == 0) bestMove = move; // ←ここで最上位の手を保存
       }
-
-      if (alpha >= beta)  // 枝刈り条件
-        break;
+      alpha = Math.max(alpha, v);
+      if (alpha >= beta) break;
     }
-
-    return alpha;
+    if (depth == 0 && bestMove != null) this.move = bestMove; // ←ここでセット
+    transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
+    return best;
   }
 
   // αβ法（最小化側）

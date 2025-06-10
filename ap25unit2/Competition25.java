@@ -7,24 +7,24 @@ import myplayer.MyPlayer.*;
 
 
 class Competition25 {
-  final static long TIME_LIMIT_SECONDS = 10000;
+  final static long TIME_LIMIT_SECONDS = 60;
 
   public static void main(String args[]) {
     Function<Color, Player[]> builder = (Color color) -> {
       return new Player[] {
-          new myplayer.MyPlayer(color),
+          //new myplayer.MyPlayer(color),
           new p25x00.OurPlayer(color),
-          new enemy1.OurPlayer(color),
-          new enemy2.OurPlayer(color),
-          new enemy3.OurPlayer(color),
-          new enemy4.OurPlayer(color),
-          new enemy5.OurPlayer(color),
-          new enemy6.OurPlayer(color),
-          new enemy7.OurPlayer(color),
-          new enemy8.OurPlayer(color),
-          new enemy9.OurPlayer(color),
-          new enemy10.OurPlayer(color),
-          new enemy11.OurPlayer(color),
+          // new enemy1.OurPlayer(color),
+          // new enemy2.OurPlayer(color),
+          // new enemy3.OurPlayer(color),
+          // new enemy4.OurPlayer(color),
+          // new enemy5.OurPlayer(color),
+          // new enemy6.OurPlayer(color),
+          // new enemy7.OurPlayer(color),
+          // new enemy8.OurPlayer(color),
+          // new enemy9.OurPlayer(color),
+          // new enemy10.OurPlayer(color),
+          // new enemy11.OurPlayer(color),
           new enemy12.OurPlayer(color),
           // new ap25.league.RandomPlayer(color),
           // new ap25.league.RandomPlayer(color),
