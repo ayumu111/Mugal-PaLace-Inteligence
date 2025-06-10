@@ -1,4 +1,4 @@
-package p25x00;
+package enemy5;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -6,7 +6,6 @@ import static ap25.Color.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 import ap25.*;
@@ -44,52 +43,52 @@ class MyEval {
   public MyEval(Color myColor) {
     this.myColor = myColor;
     float[][] defEarlyBlack = {
-        { -20, 63, 51, 51, 63, -20 },
-        { 63, -31, -70, -70, -31, 63 },
-        { 51, -70, -12, -12, -70, 51 },
-        { 51, -70, -12, -12, -70, 51 },
-        { 63, -31, -70, -70, -31, 63 },
-        { -20, 63, 51, 51, 63, -20 },
+        { 41, 15, -27, -27, 15, 41 },
+        { 15, 93, 61, 61, 93, 15 },
+        { -27, 61, 2, 2, 61, -27 },
+        { -27, 61, 2, 2, 61, -27 },
+        { 15, 93, 61, 61, 93, 15 },
+        { 41, 15, -27, -27, 15, 41 },
     };
     float[][] defMiddleBlack = {
-      { 41, -7, 25, 25, -7, 41 },
-      { -7, 57, 24, 24, 57, -7 },
-      { 25, 24, -51, -51, 24, 25 },
-      { 25, 24, -51, -51, 24, 25 },
-      { -7, 57, 24, 24, 57, -7 },
-      { 41, -7, 25, 25, -7, 41 },
+      { 20, 98, -87, -87, 98, 20 },
+      { 98, 50, -61, -61, 50, 98 },
+      { -87, -61, -10, -10, -61, -87 },
+      { -87, -61, -10, -10, -61, -87 },
+      { 98, 50, -61, -61, 50, 98 },
+      { 20, 98, -87, -87, 98, 20 },
     };
     float[][] defLateBlack = {
-      { 59, 55, -68, -68, 55, 59 },
-      { 55, 23, -8, -8, 23, 55 },
-      { -68, -8, -93, -93, -8, -68 },
-      { -68, -8, -93, -93, -8, -68 },
-      { 55, 23, -8, -8, 23, 55 },
-      { 59, 55, -68, -68, 55, 59 },
+      { -10, 20, 42, 42, 20, -10 },
+      { 20, 64, 63, 63, 64, 20 },
+      { 42, 63, 82, 82, 63, 42 },
+      { 42, 63, 82, 82, 63, 42 },
+      { 20, 64, 63, 63, 64, 20 },
+      { -10, 20, 42, 42, 20, -10 },
     };
     float[][] defEarlyWhite = {
-      { -2, 60, 62, 62, 60, -2 },
-      { 60, -59, 87, 87, -59, 60 },
-      { 62, 87, -60, -60, 87, 62 },
-      { 62, 87, -60, -60, 87, 62 },
-      { 60, -59, 87, 87, -59, 60 },
-      { -2, 60, 62, 62, 60, -2 },
+      { -22, -75, -36, -36, -75, -22 },
+      { -75, -93, 25, 25, -93, -75 },
+      { -36, 25, 79, 79, 25, -36 },
+      { -36, 25, 79, 79, 25, -36 },
+      { -75, -93, 25, 25, -93, -75 },
+      { -22, -75, -36, -36, -75, -22 },
     };
     float[][] defMiddleWhite = {
-      { 68, 1, 25, 25, 1, 68 },
-      { 1, 91, -23, -23, 91, 1 },
-      { 25, -23, -87, -87, -23, 25 },
-      { 25, -23, -87, -87, -23, 25 },
-      { 1, 91, -23, -23, 91, 1 },
-      { 68, 1, 25, 25, 1, 68 },
+      { 51, 97, 14, 14, 97, 51 },
+      { 97, -24, 46, 46, -24, 97 },
+      { 14, 46, 100, 100, 46, 14 },
+      { 14, 46, 100, 100, 46, 14 },
+      { 97, -24, 46, 46, -24, 97 },
+      { 51, 97, 14, 14, 97, 51 },
     };
     float[][] defLateWhite = {
-      { -64, 54, 69, 69, 54, -64 },
-      { 54, -44, -2, -2, -44, 54 },
-      { 69, -2, 19, 19, -2, 69 },
-      { 69, -2, 19, 19, -2, 69 },
-      { 54, -44, -2, -2, -44, 54 },
-      { -64, 54, 69, 69, 54, -64 },
+      { 26, 5, -68, -68, 5, 26 },
+      { 5, 96, 24, 24, 96, 5 },
+      { -68, 24, 61, 61, 24, -68 },
+      { -68, 24, 61, 61, 24, -68 },
+      { 5, 96, 24, 24, 96, 5 },
+      { 26, 5, -68, -68, 5, 26 },
     };
     for (int i = 0; i < 6; i++) {
       System.arraycopy(defEarlyBlack[i], 0, earlyBlack[i], 0, 6);
@@ -166,27 +165,14 @@ class MyEval {
 
 // プレイヤークラス
 public class OurPlayer extends ap25.Player {
-  static final String MY_NAME = "2511";
+  static final String MY_NAME = "enemy5";
   MyEval eval;
   int depthLimit;
   Move move;
   OurBoard board;
 
-  // トランスポジションテーブル（盤面ハッシュ→ノード情報）
-  static ConcurrentHashMap<Long, NodeInfo> transTable = new ConcurrentHashMap<>();
-
-  static class NodeInfo {
-    float value;
-    int depth;
-    // 必要ならMoveやαβ値も追加
-    NodeInfo(float value, int depth) {
-      this.value = value;
-      this.depth = depth;
-    }
-  }
-
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 7);
+    this(MY_NAME, color, new MyEval(color), 4);
   }
 
   // コンストラクタ（詳細指定）
@@ -223,71 +209,44 @@ public class OurPlayer extends ap25.Player {
     // 合法手がなければパス
     var legalIndexes = this.board.findNoPassLegalIndexes(getColor());
     if (legalIndexes.isEmpty()) {
-        this.move = Move.ofPass(getColor());
-    } else {
-        // 黒番ならそのまま、白番なら反転（白→黒にする）
-        var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+      this.move = Move.ofPass(getColor());
+      this.board = this.board.placed(this.move);
+      return this.move;
+    }
 
-      long bitBoardBlack = newBoard.getBitBoard(BLACK);
-      long bitBoardWhite = newBoard.getBitBoard(WHITE);
-      long bitBoardBlock = newBoard.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
-      
-      this.move = null;
+    // 黒番ならそのまま、白番なら盤面反転
+    var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
 
-      
-      var legals = this.board.findNoPassLegalIndexes(getColor());
-      maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
-
-
-      
-     
-     
     // 合法手リストをMove型に変換
-    var moves = BitBoard.findLegalMoves(BLACK);
+    var moves = newBoard.findLegalMoves(BLACK);
 
-        // 並列で各手の評価値を計算（maxSearchを使う）
-        var results = moves.parallelStream()
-            .map(move -> {
-                var nextBoard = BitBoard.placed(move);
-                float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
-                return new Object[]{move, value};
-            })
-            .toList();
+    // 並列で各手の評価値を計算
+    var results = moves.parallelStream()
+      .map(move -> {
+        var nextBoard = newBoard.placed(move);
+        float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+        return new Object[]{move, value};
+      })
+      .toList();
 
     // 最大値を持つ手を選ぶ
     var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
     this.move = ((Move)best[0]).colored(getColor());
 
     // 自分の着手を盤面に反映
-
-    
-    
-
-    }
     this.board = this.board.placed(this.move);
     return this.move;
-}
+  }
 
-  ////////////////////////////////// αβ法開始
-  float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
-    long hash = board.hash();
-    NodeInfo info = transTable.get(hash);
-    if (info != null && info.depth >= this.depthLimit - depth) {
-        return info.value;
-    }
-
-    if (isTerminal(board, depth)) {
-      float v = this.eval.value(board.encode());
-      transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
-      return v;
-    }
+  float maxSearch(Board board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(BLACK);
-    moves = order(moves);
+    moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
 
-    float best = Float.NEGATIVE_INFINITY;
-    Move bestMove = null;
+    if (depth == 0)
+      this.move = moves.get(0);  // 最上位では候補として仮に最初の手を選ぶ
+
     for (var move: moves) {
       var newBoard = board.placed(move);
       float v = minSearch(newBoard, alpha, beta, depth + 1);
@@ -297,19 +256,17 @@ public class OurPlayer extends ap25.Player {
         if (depth == 0)
           this.move = move;  // 最良手を更新
       }
-      alpha = Math.max(alpha, v);
-      if (alpha >= beta) break;
+
+      if (alpha >= beta)  // 枝刈り条件
+        break;
     }
-    if (depth == 0 && bestMove != null) this.move = bestMove; // ←ここでセット
-    transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
-    return best;
+
+    return alpha;
   }
 
   // αβ法（最小化側）
-  float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) {
-      return this.eval.value(board.encode());
-    }
+  float minSearch(Board board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(WHITE);
     moves = order(moves);
@@ -323,8 +280,8 @@ public class OurPlayer extends ap25.Player {
 
     return beta;
   }
-  //////////////////////////////// αβ法終了
-  boolean isTerminal(OurBitBoard board, int depth) {
+
+  boolean isTerminal(Board board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
   }
 

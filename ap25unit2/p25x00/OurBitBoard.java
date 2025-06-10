@@ -200,4 +200,8 @@ public class OurBitBoard  {
     Move move = (this.lastMove != null) ? this.lastMove : Move.ofPass(Color.NONE);
     return new OurBoard(board, move);
     }
-} 
+
+    public long hash() {
+        return bitBoardBlack ^ (bitBoardWhite << 21) ^ (bitBoardBlock << 42);
+    }
+}
