@@ -2,7 +2,6 @@ import ap25.*;
 import static ap25.Color.*;
 import ap25.league.*;
 import java.util.function.*;
-import myplayer.MyPlayer.*;
 
 
 

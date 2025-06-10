@@ -186,7 +186,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 7);
+    this(MY_NAME, color, new MyEval(color), 8);
   }
 
   // コンストラクタ（詳細指定）
@@ -251,7 +251,9 @@ public class OurPlayer extends ap25.Player {
     var results = moves.parallelStream()
       .map(move -> {
         var nextBoard = BitBoard.placed(move);
-        float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+        // float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+        float value = iterativeDeepening(nextBoard, this.depthLimit);
+        // float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
         return new Object[]{move, value};
       })
       .toList();
@@ -309,6 +311,7 @@ public class OurPlayer extends ap25.Player {
     }
     if (depth == 0 && bestMove != null) this.move = bestMove; // ←ここでセット
     transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
+
     return best;
   }
 
@@ -324,13 +327,126 @@ public class OurPlayer extends ap25.Player {
     for (var move: moves) {
       var newBoard = board.placed(move);
       float v = maxSearch(newBoard, alpha, beta, depth + 1);
-      beta = Math.min(beta, v);
+      beta = Math.min(beta, v); 
       if (alpha >= beta) break;
     }
 
     return beta;
   }
   //////////////////////////////// αβ法終了
+  /////////// MTD法
+  
+  float iterativeDeepening(OurBitBoard board, int maxDepth) {
+    float guess = 0;
+    for (int d = 1; d <= maxDepth; d++) {
+      guess = mtd(board, guess, d); // 前回の結果を使う
+    }
+    return guess;
+  }
+  float mtd(OurBitBoard board, float firstGuess, int depth) {
+    float g = firstGuess;
+    float upperBound = Float.POSITIVE_INFINITY;// めっちゃプラス
+    float lowerBound = Float.NEGATIVE_INFINITY;// めっちゃマイナス
+
+    while (lowerBound < upperBound) {
+        float beta = (g == lowerBound) ? g + 1 : g; // gがめっちゃマイナスならbeta = g+1 違うならbeta = g;
+        g = alphaBeta(board, beta - 1, beta, depth);// 
+        if (g < beta) {
+            upperBound = g;
+        } else {
+            lowerBound = g;
+        }
+    }
+    return g;
+  }
+
+  // null-window αβ探索
+  float alphaBeta(OurBitBoard board, float alpha, float beta, int depth) {
+      return maxSearch(board, alpha, beta, depth); // あなたのmaxSearchを再利用
+  }
+
+  ///////////////////////////////////
+  
+  
+  /// /////////////////////////////// negaScout
+  float negaScout(OurBitBoard board, float alpha, float beta, int depth) {
+    long hash = board.hash();
+    NodeInfo info = transTable.get(hash);
+    if (info != null && info.depth >= this.depthLimit - depth) {
+        return info.value;
+    }
+
+    if (isTerminal(board, depth)) {
+        float v = this.eval.value(board.encode());
+        transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
+        return v;
+    }
+
+    var moves = board.findLegalMoves(BLACK);
+    moves = order(moves);
+
+    float b = beta;
+    float best = Float.NEGATIVE_INFINITY;
+    boolean first = true;
+    for (var move : moves) {
+        var newBoard = board.placed(move);
+        float score;
+        if (first) {
+            score = -negaScoutMin(newBoard, -b, -alpha, depth + 1);
+        } else {
+            score = -negaScoutMin(newBoard, -alpha - 1, -alpha, depth + 1);
+            if (alpha < score && score < beta) {
+                // re-search if fail-soft
+                score = -negaScoutMin(newBoard, -b, -alpha, depth + 1);
+            }
+        }
+
+        best = Math.max(best, score);
+        alpha = Math.max(alpha, score);
+        if (alpha >= beta) break;
+
+        b = alpha + 1;
+        first = false;
+    }
+
+    transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
+    return best;
+  }
+
+  // 最小化側（Negamax形式で）
+  float negaScoutMin(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board, depth)) {
+        return this.eval.value(board.encode());
+    }
+
+    var moves = board.findLegalMoves(WHITE);
+    moves = order(moves);
+
+    float b = beta;
+    boolean first = true;
+    float best = Float.POSITIVE_INFINITY;
+    for (var move : moves) {
+        var newBoard = board.placed(move);
+        float score;
+        if (first) {
+            score = -negaScout(newBoard, -b, -alpha, depth + 1);
+        } else {
+            score = -negaScout(newBoard, -alpha - 1, -alpha, depth + 1);
+            if (alpha < score && score < beta) {
+                score = -negaScout(newBoard, -b, -alpha, depth + 1);
+            }
+        }
+        best = Math.min(best, score);
+        beta = Math.min(beta, score);
+        if (alpha >= beta) break;
+
+        b = beta;
+        first = false;
+    }
+
+    return beta;
+  }
+//////////////
   boolean isTerminal(OurBitBoard board, int depth) {
     return board.isEnd() || depth > this.depthLimit;
   }
