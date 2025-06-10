@@ -1,4 +1,4 @@
-package p25x00;
+package enemy7;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -165,14 +165,14 @@ class MyEval {
 
 // プレイヤークラス
 public class OurPlayer extends ap25.Player {
-  static final String MY_NAME = "2511";
+  static final String MY_NAME = "enemy7";
   MyEval eval;
   int depthLimit;
   Move move;
   OurBoard board;
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 6);
+    this(MY_NAME, color, new MyEval(color), 4);
   }
 
   // コンストラクタ（詳細指定）
