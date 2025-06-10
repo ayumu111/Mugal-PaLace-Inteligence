@@ -157,13 +157,13 @@ public class OurPlayer extends ap25.Player {
       long bitBoardBlack = newBoard.getBitBoard(BLACK);
       long bitBoardWhite = newBoard.getBitBoard(WHITE);
       long bitBoardBlock = newBoard.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
+      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
       
       this.move = null;
 
       
       var legals = this.board.findNoPassLegalIndexes(getColor());
-      maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);
+      maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
 
       this.move = this.move.colored(getColor());
 
@@ -177,28 +177,30 @@ public class OurPlayer extends ap25.Player {
       }
      
     // 合法手リストをMove型に変換
-//     var moves = newBoard.findLegalMoves(BLACK);
+    var moves = newBoard.findLegalMoves(BLACK);
 
-//     // 並列で各手の評価値を計算
-//     var results = moves.parallelStream()
-//       .map(move -> {
-//         var nextBoard = newBoard.placed(move);
-//         float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
-//         return new Object[]{move, value};
-//       })
-//       .toList();
+    // 並列で各手の評価値を計算
+    var results = moves.parallelStream()
+      .map(move -> {
+        var nextBoard = BitBoard.placed(move);
+        float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
+        return new Object[]{move, value};
+      })
+      .toList();
 
-//     // 最大値を持つ手を選ぶ
-//     var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
-//     this.move = ((Move)best[0]).colored(getColor());
+    // 最大値を持つ手を選ぶ
+    var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
+    this.move = ((Move)best[0]).colored(getColor());
 
     // 自分の着手を盤面に反映
-    this.board = this.board.placed(this.move);
 
-    return this.move;
+    
     
 
     }
+    this.board = this.board.placed(this.move);
+
+    return this.move;
   }
 
   ////////////////////////////////// αβ法開始
