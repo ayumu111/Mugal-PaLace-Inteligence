@@ -1,13 +1,10 @@
 package p25x00;
 
+import ap25.Color;
 import static ap25.Color.BLACK;
-import static ap25.Color.BLOCK;
-import static ap25.Color.NONE;
-import static ap25.Color.WHITE;
+import ap25.Move;
 import java.util.ArrayList;
 import java.util.List;
-import ap25.Color;
-import ap25.Move;
 
 public class OurBitBoard  {
   private long bitBoardBlack;
@@ -32,51 +29,90 @@ public class OurBitBoard  {
 
   public List<Move> findLegalMoves(Color color) {
         List<Move> legalMoves = new ArrayList<>();
+        // long own   = 0b000000111011110001101101011001011111L;
+        // long opp   = 0b010110000100001110010010100110100000L;
+
+        /* 
+         * b b b b b w
+         * b w w b b w
+         * b w b b w b
+         * b w w w b b
+         * b b w b b b
+         * n w w n w n
+         * 
+         * 33 d6
+        */
         long own = (color == BLACK) ? bitBoardBlack : bitBoardWhite;
         long opp = (color == BLACK) ? bitBoardWhite : bitBoardBlack;
-        long empty = ~(own | opp | bitBoardBlock) & 0xFFFFFFFFFL; // 36bitだけ対象
-
-        long legal = 0L;
-
-        legal |= getMovesInDirection(own, opp, empty, 1, 0b011111011111011111011111011111011111L);   // →
-        legal |= getMovesInDirection(own, opp, empty, -1, 0b111110111110111110111110111110111110L);  // ←
-        legal |= getMovesInDirection(own, opp, empty, 6, 0xFFFFFFFFFL); // ↓
-        legal |= getMovesInDirection(own, opp, empty, -6, 0xFFFFFFFFFL); // ↑
-        legal |= getMovesInDirection(own, opp, empty, 7, 0b011110111101111011110111101111011000L);  // ↘︎
-        legal |= getMovesInDirection(own, opp, empty, -7, 0b000110111101111011110111101111011110L); // ↖︎
-        legal |= getMovesInDirection(own, opp, empty, 5, 0b111101111011110111101111011110111110L);  // ↙︎
-        legal |= getMovesInDirection(own, opp, empty, -5, 0b111101111011110111101111011110011111L); // ↗︎
-
-        if (legal == 0) {
+        long empty = ~(own | opp | bitBoardBlock);
+        int[] directions = {1, -1, 6, -6, 7, -7, 5, -5};
+        // 盤面の各マスをチェック
+        // System.out.println("Finding legal moves for color: " + color);
+        
+        for (int i = 0; i < 36; i++) {
+            if (((empty >>> i) & 1L) == 0) continue;
+            for (int d : directions) {
+                int prej = i;
+                int j = i + d;
+                boolean foundOpponent = false;
+                while (j >= 0 && j < 36 && isValidMove(prej, j, d)) {
+                    if (((opp >>> j) & 1L) != 0) {
+                        foundOpponent = true;
+                        prej = j;
+                        j += d;
+                    } else if (((own >>> j) & 1L) != 0) {
+                        if (foundOpponent) {
+                            legalMoves.add(new Move(i, color));
+                        }
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (legalMoves.isEmpty()) {
             legalMoves.add(Move.ofPass(color));
-            return legalMoves;
+            // System.out.println(Long.toBinaryString(own));
+            // System.out.println(Long.toBinaryString(opp));
+            // System.out.println(Long.toBinaryString(empty));
         }
-
-        long mask = legal;
-        while (mask != 0) {
-            int idx = Long.numberOfTrailingZeros(mask);
-            legalMoves.add(new Move(idx, color));
-            mask &= mask - 1;
-        }
-
         return legalMoves;
     }
+    
 
-    private long getMovesInDirection(long own, long opp, long empty, int dir, long mask) {
-        long candidate = 0L;
-        long tmp = own;
-
-        for (int i = 0; i < 5; i++) { // 5回まで挟める（6x6なら十分）
-            tmp = shift(tmp, dir) & opp & mask;
-            candidate |= tmp;
+    private boolean isValidMove(int from, int to, int direction) {
+        if (to < 0 || to >= 36) return false; // 盤面外チェック
+    
+        int fromRow = from / 6;
+        int toRow = to / 6;
+        int fromCol = from % 6;
+        int toCol = to % 6;
+    
+        int rowDiff = toRow - fromRow;
+        int colDiff = toCol - fromCol;
+    
+        switch (direction) {
+            case 1:  // 右
+                return fromRow == toRow && colDiff == 1;
+            case -1: // 左
+                return fromRow == toRow && colDiff == -1;
+            case 6:  // 下
+                return rowDiff == 1 && colDiff == 0;
+            case -6: // 上
+                return rowDiff == -1 && colDiff == 0;
+            case 7:  // 右下
+                return rowDiff == 1 && colDiff == 1;
+            case -7: // 左上
+                return rowDiff == -1 && colDiff == -1;
+            case 5:  // 左下
+                return rowDiff == 1 && colDiff == -1;
+            case -5: // 右上
+                return rowDiff == -1 && colDiff == 1;
+            default:
+                return false;
         }
-
-        return shift(candidate, dir) & empty & mask;
-    }
-
-    private long shift(long b, int d) {
-        if (d > 0) return b << d;
-        else return b >>> -d;
     }
     
     
