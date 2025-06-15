@@ -5,8 +5,11 @@ import static ap25.Color.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import ap25.*;
@@ -237,10 +240,8 @@ public class OurPlayer extends ap25.Player {
       this.move = null;
 
       
-      var legals = this.board.findNoPassLegalIndexes(getColor());
+      //var legals = this.board.findNoPassLegalIndexes(getColor());
       // maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
-
-
       
      
      
@@ -265,21 +266,25 @@ public class OurPlayer extends ap25.Player {
     var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
     this.move = ((Move)best[0]).colored(getColor());
 
-     if (legals.contains(this.move.getIndex()) == false) {
-        System.out.println("**************");
-        System.out.println(legals);
-        System.out.println(this.move);
-        System.out.println(this.move.getIndex());
-        System.out.println(this.board);
-        System.exit(0);
-      }
+    // BitBoard版の合法手チェックとエラー表示
+    var legalBitMoves = BitBoard.findLegalMoves(BLACK).stream()
+      .map(Move::getIndex)
+      .collect(Collectors.toSet());
+    if (!legalBitMoves.contains(this.move.getIndex())) {
+      System.out.println("**************");
+      System.out.println("Legal moves: " + legalBitMoves);
+      System.out.println("Selected move: " + this.move);
+      System.out.println("Selected move index: " + this.move.getIndex());
+      System.out.println("BitBoard: " + BitBoard);
+      System.exit(0);
+    }
 
     
     
 
     }
     this.board = this.board.placed(this.move);
-    System.out.println(this.move);
+    //System.out.println(this.move);
     return this.move;
   }
 
@@ -298,23 +303,36 @@ public class OurPlayer extends ap25.Player {
     }
 
     var moves = board.findLegalMoves(BLACK);
-    moves = order(moves);
+    if (moves.isEmpty()) {
+        float v = this.eval.value(board.encode());
+        return v;
+    }
+    
+    // 子ノードを記録（最上位またはトランスポジションテーブルにない場合のみ）
+    if (depth == 0 || info == null) {
+        recordChildNodes(board, moves, depth);
+    }
+    
+    // 保存された子ノード情報を使ってソート
+    moves = order(moves, board);
 
     float best = Float.NEGATIVE_INFINITY;
     Move bestMove = null;
-    for (var move: moves) {
-      var newBoard = board.placed(move);
-      float v = minSearch(newBoard, alpha, beta, depth + 1);
-      if (v > best) {
-        best = v;
-        if (depth == 0) bestMove = move; // ←ここで最上位の手を保存
-      }
-      alpha = Math.max(alpha, v);
-      if (alpha >= beta) break;
+    
+    for (var move : moves) {
+        var newBoard = board.placed(move);
+        float v = minSearch(newBoard, alpha, beta, depth + 1);
+        
+        if (v > best) {
+            best = v;
+            if (depth == 0) bestMove = move;
+        }
+        alpha = Math.max(alpha, v);
+        if (alpha >= beta) break; // αβ枝刈り
     }
-    if (depth == 0 && bestMove != null) this.move = bestMove; // ←ここでセット
+    
+    if (depth == 0 && bestMove != null) this.move = bestMove;
     transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
-
     return best;
   }
 
@@ -325,16 +343,32 @@ public class OurPlayer extends ap25.Player {
     }
 
     var moves = board.findLegalMoves(WHITE);
-    moves = order(moves);
-
-    for (var move: moves) {
-      var newBoard = board.placed(move);
-      float v = maxSearch(newBoard, alpha, beta, depth + 1);
-      beta = Math.min(beta, v); 
-      if (alpha >= beta) break;
+    if (moves.isEmpty()) {
+        return this.eval.value(board.encode());
     }
+    
+    // 子ノードを記録
+    long hash = board.hash();
+    NodeInfo info = transTable.get(hash);
+    if (info == null) {
+        recordChildNodes(board, moves, depth);
+    }
+    
+    // 保存された子ノード情報を使ってソート
+    moves = order(moves, board);
 
-    return beta;
+    float best = Float.POSITIVE_INFINITY;
+    
+    for (var move : moves) {
+        var newBoard = board.placed(move);
+        float v = maxSearch(newBoard, alpha, beta, depth + 1);
+        
+        best = Math.min(best, v);
+        beta = Math.min(beta, v);
+        if (alpha >= beta) break; // αβ枝刈り
+    }
+    
+    return best;
   }
   //////////////////////////////// αβ法終了
   /////////// MTD法
@@ -392,7 +426,7 @@ public class OurPlayer extends ap25.Player {
       }
       
       var moves = board.findLegalMoves(isBlack ? BLACK : WHITE);
-      moves = order(moves);
+      moves = order(moves, board); // 手の順番を評価値でソート
       
       float best = Float.NEGATIVE_INFINITY;
       Move bestMove = null;
@@ -437,13 +471,108 @@ public class OurPlayer extends ap25.Player {
     return board.isEnd() || depth > this.depthLimit;
   }
 
-  List<Move> order(List<Move> moves) {
-    var shuffled = new ArrayList<Move>(moves);
-    Collections.shuffle(shuffled);
-    return shuffled;
-  }
+  // 評価関数の値によってMoveをソートする
+  // 保存された子ノード情報を使ってMoveOrderingを行う
+  List<Move> order(List<Move> moves, OurBitBoard board) {
+    // movesが空または1個以下の場合はそのまま返す
+    if (moves == null || moves.size() <= 1) {
+        return moves;
+    }
+    
+    // 保存された子ノード情報を取得
+    long parentHash = board.hash();
+    List<ChildNodeRecord> childNodes = childNodeTable.getOrDefault(parentHash, new ArrayList<>());
+    
+    // 子ノード情報がない場合は元の順序を返す
+    if (childNodes.isEmpty()) {
+        return moves;
+    }
+    
+    // 子ノード情報をMap化（Move -> 評価値）
+    Map<Move, Float> evaluationMap = new HashMap<>();
+    for (ChildNodeRecord child : childNodes) {
+        evaluationMap.put(child.move, child.evaluation);
+    }
+    
+    // 保存された評価値でソート（評価値が高い順）
+    return moves.stream()
+        .sorted((a, b) -> {
+            Float evalA = evaluationMap.get(a);
+            Float evalB = evaluationMap.get(b);
+            
+            // 評価値がない場合は0として扱う
+            if (evalA == null) evalA = 0.0f;
+            if (evalB == null) evalB = 0.0f;
+            
+            return Float.compare(evalB, evalA); // 降順ソート
+        })
+        .collect(Collectors.toList());
+   }
 
-  public static void setEvalWeights(float w1, float w2, float w3, float w4, float w5) {
-    MyEval.setEvalWeights(w1, w2, w3, w4, w5);
-  }
+// 子ノードの情報を記録するクラス
+static class ChildNodeRecord {
+    long bitBoardHash;  // 子ノードの盤面ハッシュ
+    float evaluation;   // 子ノードの評価値
+    Move move;          // その子ノードに至る手
+    int depth;          // 探索した深さ
+    
+    ChildNodeRecord(long hash, float eval, Move move, int depth) {
+        this.bitBoardHash = hash;
+        this.evaluation = eval;
+        this.move = move;
+        this.depth = depth;
+    }
+}
+
+// 親ノードのハッシュ → 子ノード記録のマップ
+static ConcurrentHashMap<Long, List<ChildNodeRecord>> childNodeTable = new ConcurrentHashMap<>();
+
+// 子ノードを記録するメソッド
+private void recordChildNodes(OurBitBoard parentBoard, List<Move> moves, int depth) {
+    long parentHash = parentBoard.hash();
+    List<ChildNodeRecord> children = new ArrayList<>();
+    
+    for (Move move : moves) {
+        OurBitBoard childBoard = parentBoard.placed(move);
+        long childHash = childBoard.hash();
+        
+        // 子ノードの簡易評価（実際の探索前の予備評価）
+        float childEval = this.eval.value(childBoard.encode());
+        
+        children.add(new ChildNodeRecord(childHash, childEval, move, depth + 1));
+    }
+    
+    childNodeTable.put(parentHash, children);
+}
+
+// 子ノード情報を取得するメソッド
+public List<ChildNodeRecord> getChildNodes(OurBitBoard board) {
+    long hash = board.hash();
+    return childNodeTable.getOrDefault(hash, new ArrayList<>());
+}
+
+// 子ノード情報をクリアするメソッド（メモリ管理用）
+public static void clearChildNodeTable() {
+    childNodeTable.clear();
+}
+
+// 特定の親ノードの子ノード情報のみを削除
+public static void removeChildNodes(long parentHash) {
+    childNodeTable.remove(parentHash);
+}
+
+// 子ノード情報を効率的に更新するメソッド
+private void updateChildNodeEvaluation(OurBitBoard parentBoard, Move move, float newEvaluation) {
+    long parentHash = parentBoard.hash();
+    List<ChildNodeRecord> children = childNodeTable.get(parentHash);
+    
+    if (children != null) {
+        for (ChildNodeRecord child : children) {
+            if (child.move.equals(move)) {
+                child.evaluation = newEvaluation;
+                break;
+            }
+        }
+    }
+}
 }
