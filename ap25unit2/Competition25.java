@@ -31,7 +31,7 @@ class Competition25 {
       };
     };
 
-    var league = new League(3, builder, TIME_LIMIT_SECONDS);
+    var league = new League(10, builder, TIME_LIMIT_SECONDS);
     league.run();
   }
 
