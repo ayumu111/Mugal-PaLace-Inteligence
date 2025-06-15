@@ -189,7 +189,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 10);
+    this(MY_NAME, color, new MyEval(color), 8);
   }
 
   // コンストラクタ（詳細指定）
@@ -220,37 +220,42 @@ public class OurPlayer extends ap25.Player {
 
   // 思考メソッド
   public Move think(Board board) {
+    // 【重要】思考開始時に子ノードテーブルをクリア
+    clearChildNodeTable();
+    
     // 相手の着手を反映
-    // ここでOurBoardに渡る
     this.board = this.board.placed(board.getMove());
-
+    
     // 合法手がなければパス
     var legalIndexes = this.board.findNoPassLegalIndexes(getColor());
     if (legalIndexes.isEmpty()) {
-      this.move = Move.ofPass(getColor());
+        this.move = Move.ofPass(getColor());
     } else {
-      // 黒番ならそのまま、白番なら反転（白→黒にする）
-      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+        // 黒番ならそのまま、白番なら反転（白→黒にする）
+        var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
 
-      long bitBoardBlack = newBoard.getBitBoard(BLACK);
-      long bitBoardWhite = newBoard.getBitBoard(WHITE);
-      long bitBoardBlock = newBoard.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
+        long bitBoardBlack = newBoard.getBitBoard(BLACK);
+        long bitBoardWhite = newBoard.getBitBoard(WHITE);
+        long bitBoardBlock = newBoard.getBitBoard(BLOCK);
+        OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
       
       this.move = null;
 
       
       //var legals = this.board.findNoPassLegalIndexes(getColor());
-      // maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
+     // maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
       
      
      
-    // 合法手リストをMove型に変換
-    var moves = BitBoard.findLegalMoves(BLACK);
+     // 合法手リストをMove型に変換
+     var moves = BitBoard.findLegalMoves(BLACK);
+     // int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
 
-    // 並列で各手の評価値を計算
-    var results = moves.parallelStream()
-      .map(move -> {
+    // 各手の評価値を逐次的に計算
+    ArrayList<Object[]> results;
+    //if (stoneCount < 30) {
+      results = new ArrayList<>();
+      for (var move : moves) {
         var nextBoard = BitBoard.placed(move);
         // float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
         float value = iterativeDeepening(nextBoard, this.depthLimit);
@@ -258,9 +263,18 @@ public class OurPlayer extends ap25.Player {
         // float value = negaScout(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1,1);
 
         // float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
-        return new Object[]{move, value};
-      })
-      .toList();
+        results.add(new Object[]{move, value});
+      }
+    // } else {
+    //   // 終盤になったら並列処理を使用
+    //   results = moves.parallelStream()
+    //     .map(move -> {
+    //       var nextBoard = BitBoard.placed(move);
+    //       float value = iterativeDeepening(nextBoard, this.depthLimit);
+    //       return new Object[]{move, value};
+    //     })
+    //     .collect(Collectors.toCollection(ArrayList::new));
+    // }
 
     // 最大値を持つ手を選ぶ
     var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
@@ -289,6 +303,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   ////////////////////////////////// αβ法開始
+  // maxSearchの修正版（良い手ほど深く探索）
   float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
     long hash = board.hash();
     NodeInfo info = transTable.get(hash);
@@ -297,9 +312,9 @@ public class OurPlayer extends ap25.Player {
     }
 
     if (isTerminal(board, depth)) {
-      float v = this.eval.value(board.encode());
-      transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
-      return v;
+        float v = this.eval.value(board.encode());
+        transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
+        return v;
     }
 
     var moves = board.findLegalMoves(BLACK);
@@ -308,27 +323,30 @@ public class OurPlayer extends ap25.Player {
         return v;
     }
     
-    // 子ノードを記録（最上位またはトランスポジションテーブルにない場合のみ）
-    if (depth == 0 || info == null) {
-        recordChildNodes(board, moves, depth);
-    }
-    
-    // 保存された子ノード情報を使ってソート
-    moves = order(moves, board);
+    // 子ノードを事前計算（重複処理を一度にまとめる）
+    List<EvaluatedChildNode> children = precomputeChildren(board, moves);
 
     float best = Float.NEGATIVE_INFINITY;
     Move bestMove = null;
     
-    for (var move : moves) {
-        var newBoard = board.placed(move);
-        float v = minSearch(newBoard, alpha, beta, depth + 1);
+    for (int i = 0; i < children.size(); i++) {
+        var child = children.get(i);
+        
+        // 追加深度の計算
+        int extraDepth = 0;
+        if (i == 0) extraDepth = 2;
+        else if (i == 1) extraDepth = 1;
+        else if (i == 2) extraDepth = 1;
+        
+        // 既に生成済みの盤面を使用（重複なし）
+        float v = minSearch(child.board, alpha, beta, depth + 1 + extraDepth);
         
         if (v > best) {
             best = v;
-            if (depth == 0) bestMove = move;
+            if (depth == 0) bestMove = child.move;
         }
         alpha = Math.max(alpha, v);
-        if (alpha >= beta) break; // αβ枝刈り
+        if (alpha >= beta) break;
     }
     
     if (depth == 0 && bestMove != null) this.move = bestMove;
@@ -337,6 +355,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   // αβ法（最小化側）
+  // minSearchも同様に修正
   float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
     if (isTerminal(board, depth)) {
       return this.eval.value(board.encode());
@@ -354,14 +373,22 @@ public class OurPlayer extends ap25.Player {
         recordChildNodes(board, moves, depth);
     }
     
-    // 保存された子ノード情報を使ってソート
+    // 保存された子ノード情報を使ってソート（評価値の高い順）
     moves = order(moves, board);
 
     float best = Float.POSITIVE_INFINITY;
     
-    for (var move : moves) {
+    for (int i = 0; i < moves.size(); i++) {
+        var move = moves.get(i);
         var newBoard = board.placed(move);
-        float v = maxSearch(newBoard, alpha, beta, depth + 1);
+        
+        // 良い手ほど深く探索（上位3手に追加の深さを与える）
+        int extraDepth = 0;
+        if (i == 0) extraDepth = 2;      // 最良手: +3深く
+        else if (i == 1) extraDepth = 1; // 2番目: +2深く
+        else if (i == 2) extraDepth = 1; // 3番目: +1深く
+        
+        float v = maxSearch(newBoard, alpha, beta, depth + 1 + extraDepth);
         
         best = Math.min(best, v);
         beta = Math.min(beta, v);
@@ -554,6 +581,7 @@ public List<ChildNodeRecord> getChildNodes(OurBitBoard board) {
 // 子ノード情報をクリアするメソッド（メモリ管理用）
 public static void clearChildNodeTable() {
     childNodeTable.clear();
+    System.gc(); // メモリ解放を促進（オプション）
 }
 
 // 特定の親ノードの子ノード情報のみを削除
@@ -574,5 +602,37 @@ private void updateChildNodeEvaluation(OurBitBoard parentBoard, Move move, float
             }
         }
     }
+}
+
+// 評価済み子ノード情報を保持するクラス
+static class EvaluatedChildNode {
+    Move move;
+    OurBitBoard board;     // 既に生成済みの盤面
+    OurBoard encodedBoard; // 既にエンコード済みの盤面
+    float evaluation;      // 既に計算済みの評価値
+    
+    EvaluatedChildNode(Move move, OurBitBoard board, OurBoard encoded, float eval) {
+        this.move = move;
+        this.board = board;
+        this.encodedBoard = encoded;
+        this.evaluation = eval;
+    }
+}
+
+// 子ノードの事前計算（1回だけ実行）
+private List<EvaluatedChildNode> precomputeChildren(OurBitBoard parentBoard, List<Move> moves) {
+    List<EvaluatedChildNode> children = new ArrayList<>();
+    
+    for (Move move : moves) {
+        OurBitBoard childBoard = parentBoard.placed(move);    // 1回だけ生成
+        OurBoard encodedBoard = childBoard.encode();          // 1回だけエンコード
+        float evaluation = this.eval.value(encodedBoard);     // 1回だけ評価
+        
+        children.add(new EvaluatedChildNode(move, childBoard, encodedBoard, evaluation));
+    }
+    
+    // 評価値でソート
+    children.sort((a, b) -> Float.compare(b.evaluation, a.evaluation));
+    return children;
 }
 }
