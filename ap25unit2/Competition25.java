@@ -11,7 +11,7 @@ class Competition25 {
     Function<Color, Player[]> builder = (Color color) -> {
       return new Player[] {
           //new myplayer.MyPlayer(color),
-          new p25x00.OurPlayer(color),
+          new p25x11.OurPlayer(color),
           // new enemy1.OurPlayer(color),
           // new enemy2.OurPlayer(color),
           // new enemy3.OurPlayer(color),
@@ -35,8 +35,8 @@ class Competition25 {
   }
 
   public static void singleGame(String args[]) {
-    var player1 = new p25x00.OurPlayer(BLACK);
-    var player2 = new p25x00.OurPlayer(WHITE);
+    var player1 = new p25x11.OurPlayer(BLACK);
+    var player2 = new p25x11.OurPlayer(WHITE);
     var board = new OfficialBoard();
     var game = new Game(board, player1, player2, TIME_LIMIT_SECONDS);
     game.play();
