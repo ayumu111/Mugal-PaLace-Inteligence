@@ -1,4 +1,4 @@
-package p25x00;
+package p25x11;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -261,7 +261,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 8);
+    this(MY_NAME, color, new MyEval(color), 9);
   }
 
   // コンストラクタ（詳細指定）
@@ -314,7 +314,7 @@ public class OurPlayer extends ap25.Player {
       this.move = null;
 
       
-      //var legals = this.board.findNoPassLegalIndexes(getColor());
+     //var legals = this.board.findNoPassLegalIndexes(getColor());
      // maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
       
      
@@ -390,19 +390,18 @@ public class OurPlayer extends ap25.Player {
     }
 
     var moves = board.findLegalMoves(BLACK);
-    if (moves.isEmpty()) {
-        float v = this.eval.value(board.encode());
-        return v;
-    }
     
-    // 子ノードを事前計算（重複処理を一度にまとめる）
-    List<EvaluatedChildNode> children = precomputeChildren(board, moves);
-
+    // 子ノードを記録
+    recordChildNodes(board, moves, depth);
+    
+    // ソート実行
+    moves = order(moves, board);
+    
     float best = Float.NEGATIVE_INFINITY;
     Move bestMove = null;
     
-    for (int i = 0; i < children.size(); i++) {
-        var child = children.get(i);
+    for (int i = 0; i < moves.size(); i++) {
+        var move = moves.get(i);
         
         // 追加深度の計算
         int extraDepth = 0;
@@ -411,11 +410,12 @@ public class OurPlayer extends ap25.Player {
         else if (i == 2) extraDepth = 1;
         
         // 既に生成済みの盤面を使用（重複なし）
-        float v = minSearch(child.board, alpha, beta, depth + 1 + extraDepth);
+        OurBitBoard newBoard = board.placed(move);
+        float v = minSearch(newBoard, alpha, beta, depth + 1 + extraDepth);
         
         if (v > best) {
             best = v;
-            if (depth == 0) bestMove = child.move;
+            if (depth == 0) bestMove = move;
         }
         alpha = Math.max(alpha, v);
         if (alpha >= beta) break;
