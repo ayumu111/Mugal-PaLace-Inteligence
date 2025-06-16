@@ -4,7 +4,6 @@ import ap25.league.*;
 import java.util.function.*;
 
 
-
 class Competition25 {
   final static long TIME_LIMIT_SECONDS = 60;
 

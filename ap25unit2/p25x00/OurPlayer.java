@@ -165,6 +165,78 @@ class MyEval {
     float[][] M = getM(board);
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
+
+  // MyEvalクラス内に追加
+  public float valueBitBoard(OurBitBoard bitBoard) {
+    // 終了判定
+    if (bitBoard.isEnd()) {
+        return 1000000 * scoreBitBoard(bitBoard);
+    }
+    
+    // BitBoardから直接重み付きスコアを計算
+    float psi = scoreBitBoard(bitBoard);
+    
+    // 合法手数の計算（BitBoardから直接）
+    int lb = bitBoard.findLegalMoves(BLACK).size();
+    int lw = bitBoard.findLegalMoves(WHITE).size();
+    
+    // 石数の計算（BitBoardから直接）
+    int nb = countStones(bitBoard.getBitBoardBlack());
+    int nw = countStones(bitBoard.getBitBoardWhite());
+    
+    // 重み配列探索用
+    float w1 = 1;
+    float w2 = 0;
+    float w3 = 0;
+    float w4 = 0;
+    float w5 = 0;
+    
+    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw;
+  }
+
+  // BitBoardから直接スコアを計算
+  private float scoreBitBoard(OurBitBoard bitBoard) {
+    float score = 0;
+    long blackBoard = bitBoard.getBitBoardBlack();
+    long whiteBoard = bitBoard.getBitBoardWhite();
+    
+    // 石数から進行状況を判定
+    int stoneCount = countStones(blackBoard) + countStones(whiteBoard);
+    float[][] weights = getWeightsByStoneCount(stoneCount);
+    
+    // 各マスの重み付きスコアを計算
+    for (int i = 0; i < 36; i++) {
+        long bit = 1L << i;
+        int row = i / 6;
+        int col = i % 6;
+        
+        if ((blackBoard & bit) != 0) {
+            score += weights[row][col]; // 黒石
+        } else if ((whiteBoard & bit) != 0) {
+            score -= weights[row][col]; // 白石
+        }
+    }
+    
+    return score;
+  }
+
+  // BitBoardから石数をカウント
+  private int countStones(long bitBoard) {
+    return Long.bitCount(bitBoard);
+  }
+
+  // 石数から重み配列を取得
+  private float[][] getWeightsByStoneCount(int stoneCount) {
+    if (myColor == BLACK) {
+        if (stoneCount < 12) return earlyBlack;
+        if (stoneCount < 24) return middleBlack;
+        return lateBlack;
+    } else {
+        if (stoneCount < 12) return earlyWhite;
+        if (stoneCount < 24) return middleWhite;
+        return lateWhite;
+    }
+  }
 }
 
 // プレイヤークラス
@@ -512,7 +584,8 @@ public class OurPlayer extends ap25.Player {
     
     // 子ノード情報がない場合は元の順序を返す
     if (childNodes.isEmpty()) {
-        return moves;
+      //System.out.println("[DEBUG] No child nodes found for parent hash: " + parentHash + ", moves: " + moves);
+      return moves;
     }
     
     // 子ノード情報をMap化（Move -> 評価値）
@@ -624,11 +697,11 @@ private List<EvaluatedChildNode> precomputeChildren(OurBitBoard parentBoard, Lis
     List<EvaluatedChildNode> children = new ArrayList<>();
     
     for (Move move : moves) {
-        OurBitBoard childBoard = parentBoard.placed(move);    // 1回だけ生成
-        OurBoard encodedBoard = childBoard.encode();          // 1回だけエンコード
-        float evaluation = this.eval.value(encodedBoard);     // 1回だけ評価
+        OurBitBoard childBoard = parentBoard.placed(move);
+        // encode()を使わずに直接BitBoardで評価
+        float evaluation = this.eval.valueBitBoard(childBoard);
         
-        children.add(new EvaluatedChildNode(move, childBoard, encodedBoard, evaluation));
+        children.add(new EvaluatedChildNode(move, childBoard, null, evaluation));
     }
     
     // 評価値でソート

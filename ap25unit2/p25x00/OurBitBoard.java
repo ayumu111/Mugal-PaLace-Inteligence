@@ -204,4 +204,16 @@ public class OurBitBoard  {
     public long hash() {
         return bitBoardBlack ^ (bitBoardWhite << 21) ^ (bitBoardBlock << 42);
     }
+
+    public long getBitBoardBlack() {
+        return bitBoardBlack;
+    }
+
+    public long getBitBoardWhite() {
+        return bitBoardWhite;
+    }
+
+    public long getBitBoardBlock() {
+        return bitBoardBlock;
+    }
 }
