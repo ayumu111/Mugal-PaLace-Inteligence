@@ -223,7 +223,7 @@ class MyEval {
   static float[][] customW = {
     {1, 0.8f, 0.3f}, {1.24f, 1.24f, 1.24f}, {0.1f, 0.8f, 1.5f}, {-0.1f, -0.8f, 1.2f}, {2, 5, 8},
     {-2, -4, -6}, {0.5f, 0.5f, 0},{-0.5f, -0.5f, 0},
-    {2.0f, 2.0f, 2.0f}, {-2, -2, -10} 
+    {2.0f, 2.0f, 2.0f}, {-2, -2, -2} 
     };
 
   // 評価関数の重みを外部からセットできるようにする
@@ -298,7 +298,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 9);
+    this(MY_NAME, color, new MyEval(color), 8);
   }
 
   // コンストラクタ（詳細指定）
@@ -388,6 +388,13 @@ public class OurPlayer extends ap25.Player {
     // 最大値を持つ手を選ぶ
     var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
     this.move = ((Move)best[0]).colored(getColor());
+    float bestValue = (float)best[1];
+
+    // 選択した手・評価値・盤面を表示
+    // System.out.println("[選択手] " + this.move);
+    // System.out.println("[評価値] " + bestValue);
+    // System.out.println("[盤面]\n" + this.board);
+
 
     // BitBoard版の合法手チェックとエラー表示
     var legalBitMoves = BitBoard.findLegalMoves(BLACK).stream()
