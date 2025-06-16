@@ -1,4 +1,4 @@
-package p25x00;
+package p25x00ad;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -50,52 +50,52 @@ class MyEval {
   public MyEval(Color myColor) {
     this.myColor = myColor;
     float[][] defEarlyBlack = {
-{ -66, -56, 22, 22, -56, -66 },
-{ -56, 14, 47, 47, 14, -56 },
-{ 22, 47, 36, 36, 47, 22 },
-{ 22, 47, 36, 36, 47, 22 },
-{ -56, 14, 47, 47, 14, -56 },
-{ -66, -56, 22, 22, -56, -66 },
+      { 20,  10, 10, 10,  10,  20},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 20,  10, 10, 10,  10,  20},
     };
     float[][] defMiddleBlack = {
-{ -15, -91, 43, 43, -91, -15 },
-{ -91, -74, -39, -39, -74, -91 },
-{ 43, -39, 67, 67, -39, 43 },
-{ 43, -39, 67, 67, -39, 43 },
-{ -91, -74, -39, -39, -74, -91 },
-{ -15, -91, 43, 43, -91, -15 },
+      { 30,  12, 12, 12,  12,  30},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 30,  12, 12, 12,  12,  30},
     };
     float[][] defLateBlack = {
-{ 2, 43, 23, 23, 43, 2 },
-{ 43, -35, -40, -40, -35, 43 },
-{ 23, -40, 40, 40, -40, 23 },
-{ 23, -40, 40, 40, -40, 23 },
-{ 43, -35, -40, -40, -35, 43 },
-{ 2, 43, 23, 23, 43, 2 },
+      { 50,  20, 20, 20,  20,  50},
+      { 20,   0,  5,  5,   0,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   0,  5,  5,   0,  20},
+      { 50,  20, 20, 20,  20,  50},
     };
     float[][] defEarlyWhite = {
-{ -46, 61, -67, -67, 61, -46 },
-{ 61, 21, 38, 38, 21, 61 },
-{ -67, 38, -28, -28, 38, -67 },
-{ -67, 38, -28, -28, 38, -67 },
-{ 61, 21, 38, 38, 21, 61 },
-{ -46, 61, -67, -67, 61, -46 },
+      { 20,  10, 10, 10,  10,  20},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 20,  10, 10, 10,  10,  20},
     };
     float[][] defMiddleWhite = {
-{ 70, -43, 4, 4, -43, 70 },
-{ -43, -1, -9, -9, -1, -43 },
-{ 4, -9, -67, -67, -9, 4 },
-{ 4, -9, -67, -67, -9, 4 },
-{ -43, -1, -9, -9, -1, -43 },
-{ 70, -43, 4, 4, -43, 70 },
+      { 30,  12, 12, 12,  12,  30},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 30,  12, 12, 12,  12,  30},
     };
     float[][] defLateWhite = {
-{ 47, -39, 86, 86, -39, 47 },
-{ -39, 38, -94, -94, 38, -39 },
-{ 86, -94, 13, 13, -94, 86 },
-{ 86, -94, 13, 13, -94, 86 },
-{ -39, 38, -94, -94, 38, -39 },
-{ 47, -39, 86, 86, -39, 47 },
+      { 50,  20, 20, 20,  20,  50},
+      { 20,   0,  5,  5,   0,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   0,  5,  5,   0,  20},
+      { 50,  20, 20, 20,  20,  50},
     };
     for (int i = 0; i < 6; i++) {
       System.arraycopy(defEarlyBlack[i], 0, earlyBlack[i], 0, 6);
@@ -118,6 +118,21 @@ class MyEval {
     int lb = board.findLegalMoves(BLACK).size();
     int lw = board.findLegalMoves(WHITE).size();
     int mobility = lb - lw; // 黒と白の合法手の数の差
+
+    // 角のモビリティ
+    int[] corner = {0, 5, 30, 35}; // 角のインデックス
+    int cMobility_black = 0;
+    int cMobility_white = 0;
+    List<Move> legalMovesBlack = board.findLegalMoves(BLACK);
+    List<Move> legalMovesWhite = board.findLegalMoves(WHITE);
+    for (int idx : corner) {
+      for (Move m : legalMovesBlack) {
+        if (m.getIndex() == idx) { cMobility_black++; break; }
+      }
+      for (Move m : legalMovesWhite) {
+        if (m.getIndex() == idx) { cMobility_white++; break; }
+      }
+    }
     
 
     // 黒と白の石の数に応じてスコアを調整
@@ -167,14 +182,19 @@ class MyEval {
     // System.out.println("StableDif: " + StableDif);
 
     // 潜在的モビリティ(潜在的合法手の数)
-    int pmob_black = ((OurBoard)board).findPotentialMobility(BLACK);
-    int pmob_white = ((OurBoard)board).findPotentialMobility(WHITE);
-
+    int pmob_black = 0;
+    int pmob_white = 0;
+    if(nb + nw  < 28) {
+      pmob_black = ((OurBoard)board).findPotentialMobility(BLACK);
+      pmob_white = ((OurBoard)board).findPotentialMobility(WHITE);
+    } 
     //重み探索用
     float[][] w = getW(board);
 
+    // 角モビリティをパラメータに追加
     float[] parameta = {psi, mobility, nb, nw, MyStable,
-                        EnemyStable, pmob_black, pmob_white};
+                        EnemyStable, pmob_black, pmob_white,
+                        cMobility_black, cMobility_white};
     float value = 0;
     int stoneCount = nb + nw; // 石の総数
 
@@ -189,16 +209,19 @@ class MyEval {
       } 
       
     }
-
+    
     // System.out.println(board);
+    // System.out.println(cMobility_black + ", " + cMobility_white);
     // System.out.println(parameta[0] + ", " + parameta[1] + ", " + parameta[2] + ", " + parameta[3] + ", " +
     //                    parameta[4] + ", " + parameta[5] + ", " + parameta[6] + ", " + parameta[7]);
     // System.out.println("評価値: " + value);
+    
     return value; // 黒番ならプラス、白番ならマイナス
   }
   static float[][] customW = {
-    {0.005f, 0.005f, 0}, {1.24f, 1.24f, 1.24f}, {0.1f, 0.5f, 1}, {-0.085f, -0.4f, 0.8f}, {5, 5, 8},
-    {-4, -4, -6}, {0.54f, 0.54f, 0.54f},{-0.79f, -0.79f, -0.79f},
+    {1, 0.8f, 0.3f}, {1.24f, 1.24f, 1.24f}, {0.1f, 0.8f, 1.5f}, {-0.1f, -0.8f, 1.2f}, {2, 5, 8},
+    {-2, -4, -6}, {0.5f, 0.5f, 0},{-0.5f, -0.5f, 0},
+    {2.0f, 2.0f, 2.0f}, {-2, -2, -10} // 角モビリティ（仮の重み）
     };
 
   // 評価関数の重みを外部からセットできるようにする
@@ -237,7 +260,7 @@ class MyEval {
 
 // プレイヤークラス
 public class OurPlayer extends ap25.Player {
-  static final String MY_NAME = "2511";
+  static final String MY_NAME = "25ad";
   MyEval eval;
   int depthLimit;
   Move move;
