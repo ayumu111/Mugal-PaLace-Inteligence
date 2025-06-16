@@ -1,4 +1,4 @@
-package p25x11;
+package enemy15;
 
 import static ap25.Color.BLACK;
 import static ap25.Color.BLOCK;
@@ -216,12 +216,9 @@ public class OurBoard implements Board, Cloneable {
         int stable = 0;
         int[] cornerIdx = {0, 5, 30, 35};
         int[][] dir = {{1, 6}, {-1, 6}, {1, -6}, {-1, -6}};
-        boolean[] isStable = new boolean[LENGTH];
-        // 角とその直線上の安定石
         for (int c = 0; c < 4; c++) {
             int corner = cornerIdx[c];
             if (get(corner) != color) continue;
-            isStable[corner] = true;
             stable++; // 角は安定
             for (int d = 0; d < 2; d++) {
                 int pos = corner;
@@ -230,8 +227,7 @@ public class OurBoard implements Board, Cloneable {
                     int ny = pos / 6 + dir[c][d] / 6;
                     if (nx < 0 || nx >= 6 || ny < 0 || ny >= 6) break;
                     int npos = ny * 6 + nx;
-                    if (get(npos) == color && !isStable[npos]) {
-                        isStable[npos] = true;
+                    if (get(npos) == color) {
                         stable++;
                         pos = npos;
                     } else {
@@ -240,58 +236,6 @@ public class OurBoard implements Board, Cloneable {
                 }
             }
         }
-        if(count(Color.BLOCK) == 0){
-            return stable; // ブロックがない場合はここで終了
-        }
-        // 角以外の外周マスで、4近傍にブロックがある自分の石を追加で安定石とする
-        int[] edgeIdx = {
-            1,2,3,4,  // 1行目
-            31,32,33,34, // 6行目
-            6,12,18,24, // 1列目
-            11,17,23,29 // 6列目
-        };
-        int[] dx = {1, -1, 0, 0};
-        int[] dy = {0, 0, 1, -1};
-        for (int idx : edgeIdx) {
-            if (get(idx) != color) continue;
-            if (isStable[idx]) continue; // すでに安定石ならスキップ
-            int x = idx % 6, y = idx / 6;
-            for (int d = 0; d < 4; d++) {
-                int nx = x + dx[d];
-                int ny = y + dy[d];
-                if (nx < 0 || nx >= 6 || ny < 0 || ny >= 6) continue;
-                int nidx = ny * 6 + nx;
-                if (get(nidx) == BLOCK) {
-                    isStable[idx] = true;
-                    stable++;
-                    break;
-                }
-            }
-        }
         return stable;
-    }
-
-    // 潜在的モビリティ(隣接空きマス数)を返す（8近傍）
-    public int findPotentialMobility(Color color) {
-        int pmob = 0;
-        int[] dx = {1, -1, 0, 0, 1, 1, -1, -1};
-        int[] dy = {0, 0, 1, -1, 1, -1, 1, -1};
-        boolean[] counted = new boolean[36];
-        for (int i = 0; i < 36; i++) {
-            if (get(i) == color) {
-                int x = i % 6, y = i / 6;
-                for (int d = 0; d < 8; d++) {
-                    int nx = x + dx[d];
-                    int ny = y + dy[d];
-                    if (nx < 0 || nx >= 6 || ny < 0 || ny >= 6) continue;
-                    int nidx = ny * 6 + nx;
-                    if (get(nidx) == NONE && !counted[nidx]) {
-                        pmob++;
-                        counted[nidx] = true;
-                    }
-                }
-            }
-        }
-        return pmob;
     }
 }

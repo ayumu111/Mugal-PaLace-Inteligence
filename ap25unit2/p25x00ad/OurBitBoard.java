@@ -1,4 +1,4 @@
-package p25x11;
+package p25x00ad;
 
 import ap25.Color;
 import static ap25.Color.BLACK;
@@ -242,16 +242,5 @@ public class OurBitBoard  {
         neighbor &= empty;
         // 1のビット数を数える
         return Long.bitCount(neighbor);
-    }
-    public long getBitBoardBlack() {
-        return bitBoardBlack;
-    }
-
-    public long getBitBoardWhite() {
-        return bitBoardWhite;
-    }
-
-    public long getBitBoardBlock() {
-        return bitBoardBlock;
     }
 }

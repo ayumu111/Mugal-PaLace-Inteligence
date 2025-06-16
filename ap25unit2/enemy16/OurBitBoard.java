@@ -1,4 +1,4 @@
-package p25x11;
+package enemy16;
 
 import ap25.Color;
 import static ap25.Color.BLACK;
@@ -203,55 +203,5 @@ public class OurBitBoard  {
 
     public long hash() {
         return bitBoardBlack ^ (bitBoardWhite << 21) ^ (bitBoardBlock << 42);
-    }
-
-    
-    
-    // 潜在的モビリティ（指定色の石の隣にある空きマスの数、8近傍）
-    public int findPotentialMobility(Color color) {
-        long own;
-        if (color == Color.BLACK) {
-            own = this.bitBoardBlack;
-        } else if (color == Color.WHITE) {
-            own = this.bitBoardWhite;
-        } else {
-            return 0;
-        }
-        long empty = ~(this.bitBoardBlack | this.bitBoardWhite | this.bitBoardBlock) & 0xFFFFFFFFFL; // 36bitマスク
-        long neighbor = 0L;
-        // 8方向に1ビットずつシフトして隣接マスを集める
-        // 右
-        neighbor |= (own & 0xF7DEF7DEFL) << 1;
-        // 左
-        neighbor |= (own & 0xEF7BDEF7BL) >> 1;
-        // 上
-        neighbor |= (own & 0xFFFFFFFFFL) << 6;
-        // 下
-        neighbor |= (own & 0xFFFFFFFFFL) >> 6;
-        // 右上
-        neighbor |= (own & 0xF7DEF7DEF0L) << 7;
-        // 左上
-        neighbor |= (own & 0xEF7BDEF7B0L) << 5;
-        // 右下
-        neighbor |= (own & 0xF7DEF7DEFL) >> 5;
-        // 左下
-        neighbor |= (own & 0xEF7BDEF7BL) >> 7;
-        // 自分自身の位置は除外
-        neighbor &= ~own;
-        // 空きマスのみ
-        neighbor &= empty;
-        // 1のビット数を数える
-        return Long.bitCount(neighbor);
-    }
-    public long getBitBoardBlack() {
-        return bitBoardBlack;
-    }
-
-    public long getBitBoardWhite() {
-        return bitBoardWhite;
-    }
-
-    public long getBitBoardBlock() {
-        return bitBoardBlock;
     }
 }
