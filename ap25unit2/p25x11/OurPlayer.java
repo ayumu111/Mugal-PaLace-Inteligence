@@ -223,7 +223,7 @@ class MyEval {
   static float[][] customW = {
     {1, 0.8f, 0.3f}, {1.24f, 1.24f, 1.24f}, {0.1f, 0.8f, 1.5f}, {-0.1f, -0.8f, 1.2f}, {2, 5, 8},
     {-2, -4, -6}, {0.5f, 0.5f, 0},{-0.5f, -0.5f, 0},
-    {2.0f, 2.0f, 2.0f}, {-2, -2, -10} // 角モビリティ（仮の重み）
+    {2.0f, 2.0f, 2.0f}, {-2, -2, -10} 
     };
 
   // 評価関数の重みを外部からセットできるようにする
@@ -298,7 +298,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 8);
+    this(MY_NAME, color, new MyEval(color), 9);
   }
 
   // コンストラクタ（詳細指定）
