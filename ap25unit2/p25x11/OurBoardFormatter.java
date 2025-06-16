@@ -1,4 +1,4 @@
-package p25x00;
+package p25x11;
 
 import static ap25.Board.SIZE;
 import static ap25.Color.BLACK;
