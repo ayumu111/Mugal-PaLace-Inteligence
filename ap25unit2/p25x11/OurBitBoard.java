@@ -254,4 +254,92 @@ public class OurBitBoard  {
     public long getBitBoardBlock() {
         return bitBoardBlock;
     }
+
+    // 盤面全体のスコア計算（黒-白、全滅時は空きマス分加算）
+    public int score() {
+        int black = Long.bitCount(bitBoardBlack);
+        int white = Long.bitCount(bitBoardWhite);
+        int block = Long.bitCount(bitBoardBlock);
+        if (black == 0 && white == 0) {
+            // 全滅時は空きマス分加算
+            return 36 - block;
+        }
+        return black - white;
+    }
+
+    public int count(Color color) {
+        if (color == Color.BLACK) {
+            return Long.bitCount(bitBoardBlack);
+        } else if (color == Color.WHITE) {
+            return Long.bitCount(bitBoardWhite);
+        } else if (color == Color.BLOCK) {
+            return Long.bitCount(bitBoardBlock);
+        } else {
+            // NONEやその他
+            long all = bitBoardBlack | bitBoardWhite | bitBoardBlock;
+            return 36 - Long.bitCount(all);
+        }
+    }
+    // 指定色の簡易安定石数を返す(簡易版) for OurBitBoard
+public int countSimpleStable(Color color) {
+    int stable = 0;
+    int[] cornerIdx = {0, 5, 30, 35};
+    int[][] dir = {{1, 6}, {-1, 6}, {1, -6}, {-1, -6}};
+    boolean[] isStable = new boolean[36];
+    long colorBits = (color == Color.BLACK) ? bitBoardBlack : bitBoardWhite;
+    long blockBits = bitBoardBlock;
+
+    // 角とその直線上の安定石
+    for (int c = 0; c < 4; c++) {
+        int corner = cornerIdx[c];
+        if (((colorBits >>> corner) & 1L) == 0) continue;
+        isStable[corner] = true;
+        stable++; // 角は安定
+        for (int d = 0; d < 2; d++) {
+            int pos = corner;
+            while (true) {
+                int nx = pos % 6 + dir[c][d] % 6;
+                int ny = pos / 6 + dir[c][d] / 6;
+                if (nx < 0 || nx >= 6 || ny < 0 || ny >= 6) break;
+                int npos = ny * 6 + nx;
+                if (((colorBits >>> npos) & 1L) != 0 && !isStable[npos]) {
+                    isStable[npos] = true;
+                    stable++;
+                    pos = npos;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    if (Long.bitCount(blockBits) == 0) {
+        return stable; // ブロックがない場合はここで終了
+    }
+    // 角以外の外周マスで、4近傍にブロックがある自分の石を追加で安定石とする
+    int[] edgeIdx = {
+        1,2,3,4,  // 1行目
+        31,32,33,34, // 6行目
+        6,12,18,24, // 1列目
+        11,17,23,29 // 6列目
+    };
+    int[] dx = {1, -1, 0, 0};
+    int[] dy = {0, 0, 1, -1};
+    for (int idx : edgeIdx) {
+        if (((colorBits >>> idx) & 1L) == 0) continue;
+        if (isStable[idx]) continue; // すでに安定石ならスキップ
+        int x = idx % 6, y = idx / 6;
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx < 0 || nx >= 6 || ny < 0 || ny >= 6) continue;
+            int nidx = ny * 6 + nx;
+            if (((blockBits >>> nidx) & 1L) != 0) {
+                isStable[idx] = true;
+                stable++;
+                break;
+            }
+        }
+    }
+    return stable;
+    }
 }

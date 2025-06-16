@@ -109,7 +109,7 @@ class MyEval {
   }
 
   // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
-  public float value(Board board) {
+  public float value(OurBitBoard board) {
  if (board.isEnd()) return 1000000 * board.score();
     float psi = (float) IntStream.range(0, LENGTH)
     .mapToDouble(k -> score(board, k))
@@ -176,8 +176,8 @@ class MyEval {
     int BlockCount = board.count(Color.BLOCK);// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
     
     // 安定石の数
-    int MyStable = ((OurBoard)board).countSimpleStable(BLACK);
-    int EnemyStable = ((OurBoard)board).countSimpleStable(WHITE);
+    int MyStable = board.countSimpleStable(BLACK);
+    int EnemyStable = board.countSimpleStable(WHITE);
     int StableDif = MyStable - EnemyStable;
     // System.out.println("MyStable: " + MyStable + ", EnemyStable: " + EnemyStable);
     // System.out.println("StableDif: " + StableDif);
@@ -186,11 +186,11 @@ class MyEval {
     int pmob_black = 0;
     int pmob_white = 0;
     if(nb + nw  < 28) {
-      pmob_black = ((OurBoard)board).findPotentialMobility(BLACK);
-      pmob_white = ((OurBoard)board).findPotentialMobility(WHITE);
+      pmob_black = (board).findPotentialMobility(BLACK);
+      pmob_white = (board).findPotentialMobility(WHITE);
     } 
     //重み探索用
-    float[][] w = getW(board);
+    float[][] w = getW();
 
     // 角モビリティをパラメータに追加
     float[] parameta = {psi, mobility, nb, nw, MyStable,
@@ -233,7 +233,7 @@ class MyEval {
     }
   }
   // 重み配列を返すメソッド
-  float[][] getW(Board board) {
+  float[][] getW() {
     return customW;
   }
 
@@ -257,77 +257,23 @@ class MyEval {
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
 
-  // MyEvalクラス内に追加
-  public float valueBitBoard(OurBitBoard bitBoard) {
-    // 終了判定
-    if (bitBoard.isEnd()) {
-        return 1000000 * scoreBitBoard(bitBoard);
-    }
-    
-    // BitBoardから直接重み付きスコアを計算
-    float psi = scoreBitBoard(bitBoard);
-    
-    // 合法手数の計算（BitBoardから直接）
-    int lb = bitBoard.findLegalMoves(BLACK).size();
-    int lw = bitBoard.findLegalMoves(WHITE).size();
-    
-    // 石数の計算（BitBoardから直接）
-    int nb = countStones(bitBoard.getBitBoardBlack());
-    int nw = countStones(bitBoard.getBitBoardWhite());
-    
-    // 重み配列探索用
-    float w1 = 1;
-    float w2 = 0;
-    float w3 = 0;
-    float w4 = 0;
-    float w5 = 0;
-    
-    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw;
-  }
-
-  // BitBoardから直接スコアを計算
-  private float scoreBitBoard(OurBitBoard bitBoard) {
-    float score = 0;
-    long blackBoard = bitBoard.getBitBoardBlack();
-    long whiteBoard = bitBoard.getBitBoardWhite();
-    
-    // 石数から進行状況を判定
-    int stoneCount = countStones(blackBoard) + countStones(whiteBoard);
-    float[][] weights = getWeightsByStoneCount(stoneCount);
-    
-    // 各マスの重み付きスコアを計算
-    for (int i = 0; i < 36; i++) {
-        long bit = 1L << i;
-        int row = i / 6;
-        int col = i % 6;
-        
-        if ((blackBoard & bit) != 0) {
-            score += weights[row][col]; // 黒石
-        } else if ((whiteBoard & bit) != 0) {
-            score -= weights[row][col]; // 白石
-        }
-    }
-    
-    return score;
-  }
-
-  // BitBoardから石数をカウント
-  private int countStones(long bitBoard) {
-    return Long.bitCount(bitBoard);
-  }
-
-  // 石数から重み配列を取得
-  private float[][] getWeightsByStoneCount(int stoneCount) {
-    if (myColor == BLACK) {
-        if (stoneCount < 12) return earlyBlack;
-        if (stoneCount < 24) return middleBlack;
-        return lateBlack;
+  // OurBitBoardとintを引数に取るscore関数
+float score(OurBitBoard bitBoard, int k) {
+    float[][] M = getM(bitBoard.encode()); // 既存のgetMを流用
+    int row = k / SIZE;
+    int col = k % SIZE;
+    // k番目の色をビット演算で取得
+    int value;
+    if (((bitBoard.getBitBoardBlack() >>> k) & 1L) != 0) {
+        value = 1; // 黒
+    } else if (((bitBoard.getBitBoardWhite() >>> k) & 1L) != 0) {
+        value = -1; // 白
     } else {
-        if (stoneCount < 12) return earlyWhite;
-        if (stoneCount < 24) return middleWhite;
-        return lateWhite;
+        value = 0; // ブロックまたは空き
     }
-  }
+    return M[row][col] * value;
+}
+
 }
 
 // プレイヤークラス
@@ -352,7 +298,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 6);
+    this(MY_NAME, color, new MyEval(color), 8);
   }
 
   // コンストラクタ（詳細指定）
@@ -475,7 +421,7 @@ public class OurPlayer extends ap25.Player {
     }
 
     if (isTerminal(board, depth)) {
-        float v = this.eval.value(board.encode());
+        float v = this.eval.value(board);
         transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
         return v;
     }
@@ -521,12 +467,12 @@ public class OurPlayer extends ap25.Player {
   // minSearchも同様に修正
   float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
     if (isTerminal(board, depth)) {
-      return this.eval.value(board.encode());
+      return this.eval.value(board);
     }
 
     var moves = board.findLegalMoves(WHITE);
     if (moves.isEmpty()) {
-        return this.eval.value(board.encode());
+        return this.eval.value(board);
     }
     
     // 子ノードを記録
@@ -610,7 +556,7 @@ public class OurPlayer extends ap25.Player {
       }
       
       if (isTerminal(board, depth)) {
-          float v = this.eval.value(board.encode());
+          float v = this.eval.value(board);
           transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
           return isBlack ? v : -v;
       }
@@ -728,7 +674,7 @@ private void recordChildNodes(OurBitBoard parentBoard, List<Move> moves, int dep
         long childHash = childBoard.hash();
         
         // 子ノードの簡易評価（実際の探索前の予備評価）
-        float childEval = this.eval.value(childBoard.encode());
+        float childEval = this.eval.value(childBoard);
         
         children.add(new ChildNodeRecord(childHash, childEval, move, depth + 1));
     }
@@ -790,7 +736,7 @@ private List<EvaluatedChildNode> precomputeChildren(OurBitBoard parentBoard, Lis
     for (Move move : moves) {
         OurBitBoard childBoard = parentBoard.placed(move);
         // encode()を使わずに直接BitBoardで評価
-        float evaluation = this.eval.valueBitBoard(childBoard);
+        float evaluation = this.eval.value(childBoard);
         
         children.add(new EvaluatedChildNode(move, childBoard, null, evaluation));
     }
