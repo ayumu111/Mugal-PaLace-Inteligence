@@ -205,7 +205,6 @@ public class OurBitBoard  {
         return bitBoardBlack ^ (bitBoardWhite << 21) ^ (bitBoardBlock << 42);
     }
 
-<<<<<<< HEAD:ap25unit2/p25x00/OurBitBoard.java
     
     
     // 潜在的モビリティ（指定色の石の隣にある空きマスの数、8近傍）
@@ -243,7 +242,7 @@ public class OurBitBoard  {
         neighbor &= empty;
         // 1のビット数を数える
         return Long.bitCount(neighbor);
-=======
+    }
     public long getBitBoardBlack() {
         return bitBoardBlack;
     }
@@ -254,6 +253,5 @@ public class OurBitBoard  {
 
     public long getBitBoardBlock() {
         return bitBoardBlock;
->>>>>>> cada5a6225da3c20ec005af8e4b24bf14bdbd79e:ap25unit2/p25x11/OurBitBoard.java
     }
 }

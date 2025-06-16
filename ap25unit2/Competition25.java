@@ -5,7 +5,7 @@ import java.util.function.*;
 
 
 class Competition25 {
-  final static long TIME_LIMIT_SECONDS = 6000;
+  final static long TIME_LIMIT_SECONDS = 60;
 
   public static void main(String args[]) {
     Function<Color, Player[]> builder = (Color color) -> {
@@ -13,10 +13,7 @@ class Competition25 {
           //new myplayer.MyPlayer(color),
           new p25x11.OurPlayer(color),
           new myplayer.MyPlayer(color),
-          // new p25x01.MyPlayer(color),
-          new p25x00ad.OurPlayer(color),
-
-          
+          // new p25x01.MyPlayer(color),    
           // new enemy1.OurPlayer(color),
           // new enemy2.OurPlayer(color),
           // new enemy3.OurPlayer(color),

@@ -12,7 +12,7 @@ import ap25.Color;
 import ap25.Player;
 import myplayer.MyPlayer;
 import ap25.Board;
-import p25x00.MyEval;
+// import p25x11.MyEval; // Removed or update this line if MyEval is in a different package
 
 
 // Removed unnecessary import for Competition25; assumed to be in the same package or already accessible

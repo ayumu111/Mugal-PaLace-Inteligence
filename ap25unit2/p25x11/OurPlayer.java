@@ -43,56 +43,60 @@ class MyEval {
       System.arraycopy(late[i], 0, lateWhite[i], 0, 6);
     }
   }
+  public MyEval(Color myColor, float[][] w) {
+    this.myColor = myColor;
+    setEvalWeights(w);
+  }
   // デフォルト重み
   public MyEval(Color myColor) {
     this.myColor = myColor;
     float[][] defEarlyBlack = {
-        { -20, 63, 51, 51, 63, -20 },
-        { 63, -31, -70, -70, -31, 63 },
-        { 51, -70, -12, -12, -70, 51 },
-        { 51, -70, -12, -12, -70, 51 },
-        { 63, -31, -70, -70, -31, 63 },
-        { -20, 63, 51, 51, 63, -20 },
+      { 20,  10, 10, 10,  10,  20},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 20,  10, 10, 10,  10,  20},
     };
     float[][] defMiddleBlack = {
-      { 41, -7, 25, 25, -7, 41 },
-      { -7, 57, 24, 24, 57, -7 },
-      { 25, 24, -51, -51, 24, 25 },
-      { 25, 24, -51, -51, 24, 25 },
-      { -7, 57, 24, 24, 57, -7 },
-      { 41, -7, 25, 25, -7, 41 },
+      { 30,  12, 12, 12,  12,  30},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 30,  12, 12, 12,  12,  30},
     };
     float[][] defLateBlack = {
-      { 59, 55, -68, -68, 55, 59 },
-      { 55, 23, -8, -8, 23, 55 },
-      { -68, -8, -93, -93, -8, -68 },
-      { -68, -8, -93, -93, -8, -68 },
-      { 55, 23, -8, -8, 23, 55 },
-      { 59, 55, -68, -68, 55, 59 },
+      { 50,  20, 20, 20,  20,  50},
+      { 20,   0,  5,  5,   0,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   0,  5,  5,   0,  20},
+      { 50,  20, 20, 20,  20,  50},
     };
     float[][] defEarlyWhite = {
-      { -2, 60, 62, 62, 60, -2 },
-      { 60, -59, 87, 87, -59, 60 },
-      { 62, 87, -60, -60, 87, 62 },
-      { 62, 87, -60, -60, 87, 62 },
-      { 60, -59, 87, 87, -59, 60 },
-      { -2, 60, 62, 62, 60, -2 },
+      { 20,  10, 10, 10,  10,  20},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,   1,  1,  1,   1,  10},
+      { 10,  -10,  1,  1,  -10,  10},
+      { 20,  10, 10, 10,  10,  20},
     };
     float[][] defMiddleWhite = {
-      { 68, 1, 25, 25, 1, 68 },
-      { 1, 91, -23, -23, 91, 1 },
-      { 25, -23, -87, -87, -23, 25 },
-      { 25, -23, -87, -87, -23, 25 },
-      { 1, 91, -23, -23, 91, 1 },
-      { 68, 1, 25, 25, 1, 68 },
+      { 30,  12, 12, 12,  12,  30},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,   2,  2,  2,   2,  12},
+      { 12,  -8,  2,  2,  -8,  12},
+      { 30,  12, 12, 12,  12,  30},
     };
     float[][] defLateWhite = {
-      { -64, 54, 69, 69, 54, -64 },
-      { 54, -44, -2, -2, -44, 54 },
-      { 69, -2, 19, 19, -2, 69 },
-      { 69, -2, 19, 19, -2, 69 },
-      { 54, -44, -2, -2, -44, 54 },
-      { -64, 54, 69, 69, 54, -64 },
+      { 50,  20, 20, 20,  20,  50},
+      { 20,   0,  5,  5,   0,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   5,  5,  5,   5,  20},
+      { 20,   0,  5,  5,   0,  20},
+      { 50,  20, 20, 20,  20,  50},
     };
     for (int i = 0; i < 6; i++) {
       System.arraycopy(defEarlyBlack[i], 0, earlyBlack[i], 0, 6);
@@ -106,45 +110,132 @@ class MyEval {
 
   // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
   public float value(Board board) {
-    if (board.isEnd()) return 1000000 * board.score();
+ if (board.isEnd()) return 1000000 * board.score();
     float psi = (float) IntStream.range(0, LENGTH)
     .mapToDouble(k -> score(board, k))
     .reduce(Double::sum).orElse(0);
 
+    // 合法手の数
     int lb = board.findLegalMoves(BLACK).size();
     int lw = board.findLegalMoves(WHITE).size();
+    int mobility = lb - lw; // 黒と白の合法手の数の差
+
+    // 角のモビリティ
+    int[] corner = {0, 5, 30, 35}; // 角のインデックス
+    int cMobility_black = 0;
+    int cMobility_white = 0;
+    List<Move> legalMovesBlack = board.findLegalMoves(BLACK);
+    List<Move> legalMovesWhite = board.findLegalMoves(WHITE);
+    for (int idx : corner) {
+      for (Move m : legalMovesBlack) {
+        if (m.getIndex() == idx) { cMobility_black++; break; }
+      }
+      for (Move m : legalMovesWhite) {
+        if (m.getIndex() == idx) { cMobility_white++; break; }
+      }
+    }
+    
 
     // 黒と白の石の数に応じてスコアを調整
     int nb = board.count(Color.BLACK);
     int nw = board.count(Color.WHITE);
+    int nbDif = nb - nw; // 黒と白の石の数の差
 
+    if(nw == 0 && nb > 0){
+      return 1000000 * nb; // 黒が勝ち
+    }
+
+    // 角に関するパラメータ
+    // int[] corner ={0, 5, 30, 35}; // 角のインデックス
+    // int CornerDif = 0, MyCorner = 0, EnemyCorner = 0, BlockCorner = 0;
+    // for (int i = 0; i < 4; i++) {
+
+    //   if (board.get(corner[i]) == BLACK) {
+    //     MyCorner++;
+    //     CornerDif++;}
+    //   else if (board.get(corner[i]) == WHITE) {
+    //     EnemyCorner++;
+    //     CornerDif--;}
+    //   else if (board.get(corner[i]) == BLOCK) BlockCorner++;// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
+    // }
+
+    // 辺に関するパラメータ
+    // int[] edge = {1, 2, 3, 4, 6, 11, 12, 17, 18, 23, 24, 29, 31, 32, 33, 34}; // 辺のインデックス
+    // int EdgeDif = 0, MyEdge = 0, EnemyEdge = 0, BlockEdge = 0;
+    // for (int i = 0; i < edge.length; i++) {
+    //   if (board.get(edge[i]) == BLACK) {
+    //     MyEdge++;
+    //     EdgeDif++;}
+    //   else if (board.get(edge[i]) == WHITE) {
+    //     EnemyEdge++;
+    //     EdgeDif--;}
+    //   else if (board.get(edge[i]) == BLOCK) BlockEdge++;// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
+    // };    
+
+    // ブロックの数
+    int BlockCount = board.count(Color.BLOCK);// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
+    
+    // 安定石の数
+    int MyStable = ((OurBoard)board).countSimpleStable(BLACK);
+    int EnemyStable = ((OurBoard)board).countSimpleStable(WHITE);
+    int StableDif = MyStable - EnemyStable;
+    // System.out.println("MyStable: " + MyStable + ", EnemyStable: " + EnemyStable);
+    // System.out.println("StableDif: " + StableDif);
+
+    // 潜在的モビリティ(潜在的合法手の数)
+    int pmob_black = 0;
+    int pmob_white = 0;
+    if(nb + nw  < 28) {
+      pmob_black = ((OurBoard)board).findPotentialMobility(BLACK);
+      pmob_white = ((OurBoard)board).findPotentialMobility(WHITE);
+    } 
     //重み探索用
-    // float w1 = getw1(board);
-    // float w2 = getw2(board);
-    // float w3 = getw3(board);
-    // float w4 = getw4(board);
-    // float w5 = getw5(board);
+    float[][] w = getW(board);
 
-    //重み配列探索用
-    float w1 = 1;
-    float w2 = 0;
-    float w3 = 0;
-    float w4 = 0;
-    float w5 = 0;
+    // 角モビリティをパラメータに追加
+    float[] parameta = {psi, mobility, nb, nw, MyStable,
+                        EnemyStable, pmob_black, pmob_white,
+                        cMobility_black, cMobility_white};
+    float value = 0;
+    int stoneCount = nb + nw; // 石の総数
 
-    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
+    // 評価値計算
+    for (int i = 0; i < w.length; i++) {
+      if (stoneCount <= 12) {
+        value += w[i][0] * parameta[i]; // 序盤
+      } else if (stoneCount <= 24) {
+        value += w[i][1] * parameta[i]; // 中盤
+      } else {
+        value += w[i][2] * parameta[i]; // 終盤
+      } 
+      
+    }
+    
+    // System.out.println(board);
+    // System.out.println(cMobility_black + ", " + cMobility_white);
+    // System.out.println(parameta[0] + ", " + parameta[1] + ", " + parameta[2] + ", " + parameta[3] + ", " +
+    //                    parameta[4] + ", " + parameta[5] + ", " + parameta[6] + ", " + parameta[7]);
+    // System.out.println("評価値: " + value);
+    
+    return value; // 黒番ならプラス、白番ならマイナス
   }
+
+  static float[][] customW = {
+    {1, 0.8f, 0.3f}, {1.24f, 1.24f, 1.24f}, {0.1f, 0.8f, 1.5f}, {-0.1f, -0.8f, 1.2f}, {2, 5, 8},
+    {-2, -4, -6}, {0.5f, 0.5f, 0},{-0.5f, -0.5f, 0},
+    {2.0f, 2.0f, 2.0f}, {-2, -2, -10} // 角モビリティ（仮の重み）
+    };
 
   // 評価関数の重みを外部からセットできるようにする
-  static float customW1 = 100, customW2 = 10, customW3 = -10, customW4 = 1, customW5 = -1;
-  public static void setEvalWeights(float w1, float w2, float w3, float w4, float w5) {
-    customW1 = w1; customW2 = w2; customW3 = w3; customW4 = w4; customW5 = w5;
+  public void setEvalWeights(float[][] w) {
+    for (int i = 0; i < customW.length; i++) {
+        System.arraycopy(w[i], 0, customW[i], 0, w[i].length);
+    }
   }
-  float getw1(Board board) { return customW1; }
-  float getw2(Board board) { return customW2; }
-  float getw3(Board board) { return customW3; }
-  float getw4(Board board) { return customW4; }
-  float getw5(Board board) { return customW5; }
+  // 重み配列を返すメソッド
+  float[][] getW(Board board) {
+    return customW;
+  }
 
   // 進行状況と「自分の色」に応じて重み配列を返す
   float[][] getM(Board board) {
@@ -261,7 +352,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 9);
+    this(MY_NAME, color, new MyEval(color), 6);
   }
 
   // コンストラクタ（詳細指定）
