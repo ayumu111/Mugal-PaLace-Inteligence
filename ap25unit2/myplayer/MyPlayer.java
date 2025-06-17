@@ -57,7 +57,13 @@ class MyEval {
     float w4 = getw4(board);
     float w5 = getw5(board);
 
-    return w1*psi + w2*nb + w3*nw + w4*lb + w5*lw; // 黒番ならプラス、白番ならマイナス
+    float value = w1*psi + w2*nb + w3*nw + w4*lb + w5*lw;
+    // デバッグ用出力
+    System.out.println("[MyEval.value] psi=" + psi + ", nb=" + nb + ", nw=" + nw + ", lb=" + lb + ", lw=" + lw +"\n"+
+                       "w1=" + w1 + ", w2=" + w2 + ", w3=" + w3 + ", w4=" + w4 + ", w5=" + w5 + "\n" +
+                       "value=" + value);
+
+    return value; // 黒番ならプラス、白番ならマイナス
   }
 
   float getw1(Board board) {
@@ -167,6 +173,12 @@ public class MyPlayer extends ap25.Player {
       // 最大値を持つ手を選ぶ
       var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
       this.move = ((Move)best[0]).colored(getColor());
+      float bestValue = (float)best[1];
+
+    // 選択した手・評価値・盤面を表示
+    System.out.println("[選択手] " + this.move);
+    System.out.println("[評価値] " + bestValue);
+    System.out.println("[盤面]\n" + this.board);
     }
 
     // 自分の着手を盤面に反映

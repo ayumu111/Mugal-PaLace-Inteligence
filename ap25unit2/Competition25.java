@@ -13,7 +13,8 @@ class Competition25 {
           //new myplayer.MyPlayer(color),
           // new p25x01.OurPlayer3(color),
           new myplayer.MyPlayer(color),
-          new p25x11.OurPlayer(color),
+          new p25x11my.OurPlayer(color)
+          // new p25x11.OurPlayer(color),
           // new p25x01.MyPlayer(color),    
           // new enemy1.OurPlayer(color),
           // new enemy2.OurPlayer(color),
