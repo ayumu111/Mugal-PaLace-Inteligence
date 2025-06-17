@@ -1,4 +1,4 @@
-package p25x00;
+package enemyA;
 
 import ap25.Color;
 import static ap25.Color.BLACK;
@@ -119,66 +119,65 @@ public class OurBitBoard  {
   
 
     public OurBitBoard placed(Move move) {
-        if (move.isPass()) {
-            OurBitBoard next = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
-            next.currentTurn = this.currentTurn.flipped();
-            next.lastMove = move;
-            return next;
-        }
-    
-        long own = (currentTurn == BLACK) ? bitBoardBlack : bitBoardWhite;
-        long opp = (currentTurn == BLACK) ? bitBoardWhite : bitBoardBlack;
-        long flip = 0L;
-        int idx = move.getIndex();
-    
-        // 方向定義（{dir, mask}）
-        int[] dirs = {1, -1, 6, -6, 7, -7, 5, -5};
-        long[] masks = {
-            0b011111011111011111011111011111011111L, // →
-            0b111110111110111110111110111110111110L, // ←
-            0xFFFFFFFFFL,                            // ↓
-            0xFFFFFFFFFL,                            // ↑
-            0b011110111101111011110111101111011000L, // ↘︎
-            0b000110111101111011110111101111011110L, // ↖︎
-            0b111101111011110111101111011110111110L, // ↙︎
-            0b111101111011110111101111011110011111L  // ↗︎
-        };
-    
-        for (int i = 0; i < 8; i++) {
-            int dir = dirs[i];
-            long mask = masks[i];
-    
-            long flipped = 0L;
-            int pos = idx + dir;
-    
-            while (0 <= pos && pos < 36 && ((mask >>> pos) & 1L) != 0) {
-                long bit = 1L << pos;
-                if ((opp & bit) != 0) {
-                    flipped |= bit;
-                } else if ((own & bit) != 0) {
-                    flip |= flipped; // はさめた → 反転確定
-                    break;
-                } else {
-                    break;
-                }
-                pos += dir;
-            }
-        }
-    
-        long newOwn = own | flip | (1L << idx);
-        long newOpp = opp & ~flip;
-    
-        OurBitBoard next;
-        if (currentTurn == BLACK) {
-            next = new OurBitBoard(newOwn, newOpp, bitBoardBlock);
-        } else {
-            next = new OurBitBoard(newOpp, newOwn, bitBoardBlock);
-        }
-    
-        next.currentTurn = currentTurn.flipped();
+    if (move.isPass()) {
+        OurBitBoard next = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
+        next.currentTurn = this.currentTurn.flipped();
         next.lastMove = move;
         return next;
     }
+
+    int idx = move.getIndex();
+
+    // ブロックマスや既に石があるマスには置けない
+    long all = bitBoardBlack | bitBoardWhite | bitBoardBlock;
+    if (((all >>> idx) & 1L) != 0) {
+        throw new IllegalArgumentException("Invalid move: blocked or already occupied.");
+    }
+
+    long own = (currentTurn == BLACK) ? bitBoardBlack : bitBoardWhite;
+    long opp = (currentTurn == BLACK) ? bitBoardWhite : bitBoardBlack;
+    long flip = 0L;
+
+    int[] dirs = {1, -1, 6, -6, 7, -7, 5, -5};
+
+    for (int d : dirs) {
+        int pos = idx + d;
+        int prev = idx;
+        long flipped = 0L;
+        boolean foundOpponent = false;
+
+        while (pos >= 0 && pos < 36 && isValidMove(prev, pos, d)) {
+            long bit = 1L << pos;
+            if ((opp & bit) != 0) {
+                flipped |= bit;
+                foundOpponent = true;
+            } else if ((own & bit) != 0) {
+                if (foundOpponent) {
+                    flip |= flipped;
+                }
+                break;
+            } else {
+                break;
+            }
+            prev = pos;
+            pos += d;
+        }
+    }
+
+    long newOwn = own | flip | (1L << idx);
+    long newOpp = opp & ~flip;
+
+    OurBitBoard next;
+    if (currentTurn == BLACK) {
+        next = new OurBitBoard(newOwn, newOpp, bitBoardBlock);
+    } else {
+        next = new OurBitBoard(newOpp, newOwn, bitBoardBlock);
+    }
+
+    next.currentTurn = currentTurn.flipped();
+    next.lastMove = move;
+    return next;
+}
     
     
 
@@ -204,60 +203,4 @@ public class OurBitBoard  {
     public long hash() {
         return bitBoardBlack ^ (bitBoardWhite << 21) ^ (bitBoardBlock << 42);
     }
-
-// Colorのopposite()メソッドが無い場合の対応
-// 補助メソッドを追加
-private Color opposite(Color color) {
-    if (color == Color.BLACK) return Color.WHITE;
-    if (color == Color.WHITE) return Color.BLACK;
-    return color;
-}
-
-// 指定した手(move)を打ったときにひっくり返せる石の数を返す
-public int countFlippedStones(Move move, Color color) {
-    int total = 0;
-    int index = move.getIndex();
-    // 8方向すべて調べる
-    for (int dir = 0; dir < 8; dir++) {
-        int flipped = countFlippedInDirection(index, dir, color);
-        total += flipped;
-    }
-    return total;
-}
-
-// 1方向にひっくり返せる石の数を返す
-private int countFlippedInDirection(int index, int dir, Color color) {
-    int count = 0;
-    int x = index % 6;
-    int y = index / 6;
-    int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
-    int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
-    x += dx[dir];
-    y += dy[dir];
-    boolean foundOpponent = false;
-    while (x >= 0 && x < 6 && y >= 0 && y < 6) {
-        int idx = y * 6 + x;
-        Color c = getColorAt(idx);
-        if (c == opposite(color)) { // 修正: color.opposite() → opposite(color)
-            foundOpponent = true;
-            count++;
-        } else if (c == color) {
-            return foundOpponent ? count : 0;
-        } else {
-            break;
-        }
-        x += dx[dir];
-        y += dy[dir];
-    }
-    return 0;
-}
-
-// 指定インデックスの色を取得する補助メソッド
-private Color getColorAt(int index) {
-    // 盤面のビットボードから色を取得
-    if (((bitBoardBlack >> index) & 1L) != 0) return Color.BLACK;
-    if (((bitBoardWhite >> index) & 1L) != 0) return Color.WHITE;
-    if (((bitBoardBlock >> index) & 1L) != 0) return Color.BLOCK;
-    return Color.NONE;
-}
 }

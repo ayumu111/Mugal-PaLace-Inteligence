@@ -1,17 +1,12 @@
-package p25x00;
+package enemyA;
 
+import ap25.*;
 import static ap25.Board.*;
 import static ap25.Color.*;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
-
-import javax.swing.border.Border;
-
-import ap25.*;
 
 // 評価関数クラス
 class MyEval {
@@ -117,64 +112,53 @@ class MyEval {
     // 合法手の数
     int lb = board.findLegalMoves(BLACK).size();
     int lw = board.findLegalMoves(WHITE).size();
-    int mobility = lb - lw; // 黒と白の合法手の数の差
-    
 
     // 黒と白の石の数に応じてスコアを調整
     int nb = board.count(Color.BLACK);
     int nw = board.count(Color.WHITE);
     int nbDif = nb - nw; // 黒と白の石の数の差
 
-    if(nw == 0 && nb > 0){
-      return 1000000 * nb; // 黒が勝ち
+    // 角に関するパラメータ
+    int[] corner ={0, 5, 30, 35}; // 角のインデックス
+    int CornerDif = 0, MyCorner = 0, EnemyCorner = 0, BlockCorner = 0;
+    for (int i = 0; i < 4; i++) {
+
+      if (board.get(corner[i]) == BLACK) {
+        MyCorner++;
+        CornerDif++;}
+      else if (board.get(corner[i]) == WHITE) {
+        EnemyCorner++;
+        CornerDif--;}
+      else if (board.get(corner[i]) == BLOCK) BlockCorner++;
     }
 
-    // 角に関するパラメータ
-    // int[] corner ={0, 5, 30, 35}; // 角のインデックス
-    // int CornerDif = 0, MyCorner = 0, EnemyCorner = 0, BlockCorner = 0;
-    // for (int i = 0; i < 4; i++) {
-
-    //   if (board.get(corner[i]) == BLACK) {
-    //     MyCorner++;
-    //     CornerDif++;}
-    //   else if (board.get(corner[i]) == WHITE) {
-    //     EnemyCorner++;
-    //     CornerDif--;}
-    //   else if (board.get(corner[i]) == BLOCK) BlockCorner++;// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
-    // }
-
     // 辺に関するパラメータ
-    // int[] edge = {1, 2, 3, 4, 6, 11, 12, 17, 18, 23, 24, 29, 31, 32, 33, 34}; // 辺のインデックス
-    // int EdgeDif = 0, MyEdge = 0, EnemyEdge = 0, BlockEdge = 0;
-    // for (int i = 0; i < edge.length; i++) {
-    //   if (board.get(edge[i]) == BLACK) {
-    //     MyEdge++;
-    //     EdgeDif++;}
-    //   else if (board.get(edge[i]) == WHITE) {
-    //     EnemyEdge++;
-    //     EdgeDif--;}
-    //   else if (board.get(edge[i]) == BLOCK) BlockEdge++;// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
-    // };    
+    int[] edge = {1, 2, 3, 4, 6, 11, 12, 17, 18, 23, 24, 29, 31, 32, 33, 34}; // 辺のインデックス
+    int EdgeDif = 0, MyEdge = 0, EnemyEdge = 0, BlockEdge = 0;
+    for (int i = 0; i < edge.length; i++) {
+      if (board.get(edge[i]) == BLACK) {
+        MyEdge++;
+        EdgeDif++;}
+      else if (board.get(edge[i]) == WHITE) {
+        EnemyEdge++;
+        EdgeDif--;}
+      else if (board.get(edge[i]) == BLOCK) BlockEdge++;
+    };    
 
     // ブロックの数
-    int BlockCount = board.count(Color.BLOCK);// そのままパラメータとして使ってもその試合の中でブロックの数は変わらないので、意味なし
+    int BlockCount = board.count(Color.BLOCK);
     
     // 安定石の数
     int MyStable = ((OurBoard)board).countSimpleStable(BLACK);
     int EnemyStable = ((OurBoard)board).countSimpleStable(WHITE);
     int StableDif = MyStable - EnemyStable;
-    // System.out.println("MyStable: " + MyStable + ", EnemyStable: " + EnemyStable);
-    // System.out.println("StableDif: " + StableDif);
-
-    // 潜在的モビリティ(潜在的合法手の数)
-    int pmob_black = ((OurBoard)board).findPotentialMobility(BLACK);
-    int pmob_white = ((OurBoard)board).findPotentialMobility(WHITE);
 
     //重み探索用
     float[][] w = getW(board);
 
-    float[] parameta = {psi, mobility, nb, nw, MyStable,
-                        EnemyStable, pmob_black, pmob_white};
+    float[] parameta = {psi, lb, lw, nb, nw, nbDif, CornerDif, MyCorner, EnemyCorner, BlockCorner,
+      MyEdge, EnemyEdge, BlockEdge, EdgeDif, BlockCount, StableDif,
+      MyStable, EnemyStable};
     float value = 0;
     int stoneCount = nb + nw; // 石の総数
 
@@ -186,20 +170,12 @@ class MyEval {
         value += w[i][1] * parameta[i]; // 中盤
       } else {
         value += w[i][2] * parameta[i]; // 終盤
-      } 
+      }
       
     }
 
-    // System.out.println(board);
-    // System.out.println(parameta[0] + ", " + parameta[1] + ", " + parameta[2] + ", " + parameta[3] + ", " +
-    //                    parameta[4] + ", " + parameta[5] + ", " + parameta[6] + ", " + parameta[7]);
-    // System.out.println("評価値: " + value);
     return value; // 黒番ならプラス、白番ならマイナス
   }
-  static float[][] customW = {
-    {0.005f, 0.005f, 0}, {1.24f, 1.24f, 1.24f}, {0.1f, 0.5f, 1}, {-0.085f, -0.4f, 0.8f}, {5, 5, 8},
-    {-4, -4, -6}, {0.54f, 0.54f, 0.54f},{-0.79f, -0.79f, -0.79f},
-    };
 
   // 評価関数の重みを外部からセットできるようにする
   public void setEvalWeights(float[][] w) {
@@ -232,12 +208,31 @@ class MyEval {
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
 
-  
+static float[][] customW = {
+  {0.0f, 0.1f, 100.0f}, 
+  {-0.001f, 10.0f, 0.0f}, 
+  {0.0f, -1000.0f, 0.01f}, 
+  {100.0f, 0.001f, 100.0f}, 
+  {-1000.0f, 0.001f, 1.0f}, 
+  {-0.1f, -0.001f, 1000.0f}, 
+  {-1000.0f, 100.0f, -10.0f}, 
+  {1.0f, 100.0f, 1.0f}, 
+  {0.1f, 0.0f, -10.0f}, 
+  {-0.01f, 0.1f, 0.001f}, 
+  {1000.0f, 1000.0f, 100.0f}, 
+  {0.001f, -0.01f, 1000.0f}, 
+  {0.0f, 1000.0f, -0.01f}, 
+  {-1.0f, -100.0f, 0.001f}, 
+  {-10.0f, -0.001f, -0.1f}, 
+  {-0.001f, 10.0f, -1.0f}, 
+  {-1000.0f, -1000.0f, 0.01f}, 
+  {10.0f, -1.0f, 1000.0f}
+};
 }
 
 // プレイヤークラス
 public class OurPlayer extends ap25.Player {
-  static final String MY_NAME = "2511";
+  static final String MY_NAME = "ememyA";
   MyEval eval;
   int depthLimit;
   Move move;
@@ -257,7 +252,7 @@ public class OurPlayer extends ap25.Player {
   }
 
   public OurPlayer(Color color) {
-    this(MY_NAME, color, new MyEval(color), 6);
+    this(MY_NAME, color, new MyEval(color), 35);
   }
 
   // コンストラクタ（詳細指定）
@@ -298,160 +293,225 @@ public class OurPlayer extends ap25.Player {
       this.move = Move.ofPass(getColor());
     } else {
       // 黒番ならそのまま、白番なら反転（白→黒にする）
-      var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
+      // 反転して常に黒番で探索する
+      boolean isBlack = getColor() == BLACK;
+      var searchBoard = isBlack ? this.board.clone() : this.board.flipped();
 
-      long bitBoardBlack = newBoard.getBitBoard(BLACK);
-      long bitBoardWhite = newBoard.getBitBoard(WHITE);
-      long bitBoardBlock = newBoard.getBitBoard(BLOCK);
-      OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
-      
+      long bitBoardBlack = searchBoard.getBitBoard(BLACK);
+      long bitBoardWhite = searchBoard.getBitBoard(WHITE);
+      long bitBoardBlock = searchBoard.getBitBoard(BLOCK);
+      OurBitBoard bitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);
+
+      // 探索：Maxは常にBLACKを想定
       this.move = null;
+      // mtd(bitBoard,0);
+      mtdLogic(bitBoard,this.depthLimit);
 
-      
-      var legals = this.board.findNoPassLegalIndexes(getColor());
-      maxSearch(BitBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0);// 探索 -> 結果
-
-
-      
-     
-     
-    // 合法手リストをMove型に変換
-    var moves = BitBoard.findLegalMoves(BLACK);
-
-    // 並列で各手の評価値を計算
-    var results = moves.parallelStream()
-      .map(move -> {
-        var nextBoard = BitBoard.placed(move);
-        float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
-        return new Object[]{move, value};
-      })
-      .toList();
-
-    // 最大値を持つ手を選ぶ
-    var best = results.stream().max((a, b) -> Float.compare((float)a[1], (float)b[1])).orElse(null);
-    this.move = ((Move)best[0]).colored(getColor());
-
-     if (legals.contains(this.move.getIndex()) == false) {
-        System.out.println("**************");
-        System.out.println(legals);
-        System.out.println(this.move);
-        System.out.println(this.move.getIndex());
-        System.out.println(this.board);
-        System.exit(0);
+      // moveを元の盤面に合わせて復元（白番のとき反転）
+      if (!isBlack && this.move != null && !this.move.isPass()) {
+      this.move = Move.of(this.move.getIndex(), WHITE);
       }
 
+    //  if (legals.contains(this.move.getIndex()) == false) {
+    //     System.out.println("**************");
+    //     System.out.println(legals);
+    //     System.out.println(this.move);
+    //     System.out.println(this.move.getIndex());
+    //     System.out.println(this.board);
+    //     System.exit(0);
+    //   }
+
     
-      
 
     }
     this.board = this.board.placed(this.move);
 
     return this.move;
   }
+  void mtdLogic(OurBitBoard board, int maxDepth) {
+    var moves = board.findLegalMoves(BLACK);
+    moves = order(moves, board);
+    
+    float guess = 0;
+    float bestValue = Float.NEGATIVE_INFINITY;
+    Move bestMove = null;
+
+    for (int depth = 1; depth <= maxDepth; depth++) {
+        for (var move : moves) {
+            var newBoard = board.placed(move);
+
+            // 推定値の初期化（TTなどからも可）
+            float localGuess = guess;
+
+            // 局面の評価値を MTD(f) で求める
+            float value = mtd(newBoard, localGuess, depth);
+
+            // ベスト手を更新
+            if (value > bestValue) {
+                bestValue = value;
+                bestMove = move;
+            }
+        }
+
+        // 次のdepthの参考用に更新
+        guess = bestValue;
+    }
+
+    // 最終的な最善手
+    this.move = bestMove;
+  }
+  float mtd(OurBitBoard board, float firstGuess,int depth) {
+    float g = firstGuess;
+    float lowerBound = Float.NEGATIVE_INFINITY;
+    float upperBound = Float.POSITIVE_INFINITY;
+    int Maxcount = 30;
+    int count = 0;
+
+    while (lowerBound < upperBound && count < Maxcount) {
+        float beta = (g == lowerBound) ? g + 1 : g;
+        g = negaScout(board, beta - 1, beta, depth); // zero-width search
+        
+        if (g < beta) {
+            upperBound = g; // fail-low
+        } else {
+            lowerBound = g; // fail-high
+        }
+        count++;
+    }
+    transTable.put(board.hash(), new NodeInfo(g, depth));
+    return g;
+  }
+
+  float negaScout(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board, 0, depth)) return eval.value(board.encode());
+
+    var moves = board.findLegalMoves(BLACK);
+    moves = order(moves, board);
+
+    boolean first = true;
+    float score = Float.NEGATIVE_INFINITY;
+
+    for (var move : moves) {
+        var newBoard = board.placed(move);
+        float value;
+        if (first) {
+            value = minSearch(newBoard, alpha, beta, 1, depth);
+            first = false;
+        } else {
+            // Null Window Search
+            value = minSearch(newBoard, alpha, alpha + 1, 1, depth);
+            if (value > alpha && value < beta) {
+                // Fail High, do full re-search
+                value = minSearch(newBoard, value, beta, 1, depth);
+            }
+        }
+
+        if (value > score) {
+            score = value;
+        }
+        if (score > alpha) alpha = score;
+        if (alpha >= beta) break;
+    }
+    return alpha;
+}
+
 
   ////////////////////////////////// αβ法開始
-  float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
+  float maxSearch(OurBitBoard board, float alpha, float beta, int depth,int maxDepth) {
     long hash = board.hash();
     NodeInfo info = transTable.get(hash);
     if (info != null && info.depth >= this.depthLimit - depth) {
         return info.value;
     }
 
-    if (isTerminal(board, depth)) {
-      float v = this.eval.value(board.encode());
+      if (isTerminal(board, depth, maxDepth)){
+        float v = this.eval.value(board.encode());
       transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
       return v;
-    }
+      }
 
-    var moves = board.findLegalMoves(BLACK);
-    // 評価値でソート
-    moves = orderByEval(moves, board, true);
+      var moves = board.findLegalMoves(BLACK);
+      
+      moves = order(moves,board);
 
-    float best = Float.NEGATIVE_INFINITY;
-    Move bestMove = null;
-    int n = moves.size();
-    for (int i = 0; i < n; i++) {
-        var move = moves.get(i);
+      if (depth == 0)
+        this.move = moves.get(0);
+
+      for (var move: moves) {
         var newBoard = board.placed(move);
+        float v = minSearch(newBoard, alpha, beta, depth + 1, maxDepth);
 
-        // 良い手ほど深く探索（例: 最良手は+2, 2番目は+1, それ以降は通常）
-        int extraDepth = Math.max(0, 2 - i); // 1番目+2, 2番目+1, それ以降+0
-        float v = minSearch(newBoard, alpha, beta, depth + 1 + extraDepth);
-
-        if (v > best) {
-            best = v;
-            if (depth == 0) bestMove = move;
+        if (v > alpha) {
+          alpha = v;
         }
-        alpha = Math.max(alpha, v);
-        if (alpha >= beta) break;
-    }
-    if (depth == 0 && bestMove != null) this.move = bestMove;
-    transTable.put(hash, new NodeInfo(best, this.depthLimit - depth));
-    return best;
-  }
 
-  // αβ法（最小化側）
-  float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) {
-      return this.eval.value(board.encode());
+        if (alpha >= beta)
+          break;
+      }
+
+      return alpha;
+    }
+
+  float minSearch(OurBitBoard board, float alpha, float beta, int depth, int maxDepth) {
+    long hash = board.hash();
+    NodeInfo info = transTable.get(hash);
+    if (info != null && info.depth >= this.depthLimit - depth) {
+        return info.value;
+    }
+
+    if (isTerminal(board, depth,maxDepth)){
+      float v = this.eval.value(board.encode());
+    transTable.put(hash, new NodeInfo(v, this.depthLimit - depth));
+    return v;
     }
 
     var moves = board.findLegalMoves(WHITE);
-    moves = orderByEval(moves, board, false);
+    moves = order(moves,board);
 
-    int n = moves.size();
-    for (int i = 0; i < n; i++) {
-        var move = moves.get(i);
-        var newBoard = board.placed(move);
-
-        int extraDepth = Math.max(0, 2 - i); // 1番目+2, 2番目+1, それ以降+0
-        float v = maxSearch(newBoard, alpha, beta, depth + 1 + extraDepth);
-
-        beta = Math.min(beta, v);
-        if (alpha >= beta) break;
+    for (var move: moves) {
+      var newBoard = board.placed(move);
+      float v = maxSearch(newBoard, alpha, beta, depth + 1, maxDepth);
+      beta = Math.min(beta, v);
+      if (alpha >= beta) break;
     }
 
     return beta;
   }
   //////////////////////////////// αβ法終了
-  boolean isTerminal(OurBitBoard board, int depth) {
-    return board.isEnd() || depth > this.depthLimit;
+  boolean isTerminal(OurBitBoard board, int depth, int maxDepth) {
+    return board.isEnd() || depth > maxDepth;
   }
 
-  List<Move> order(List<Move> moves) {
-    var shuffled = new ArrayList<Move>(moves);
-    Collections.shuffle(shuffled);
-    return shuffled;
-  }
-<<<<<<< HEAD
+  List<Move> order(List<Move> moves, OurBitBoard board) {
+    // PV手を先頭に
+    if (this.move != null && moves.contains(this.move)) {
+        moves.remove(this.move);
+        moves.add(0, this.move);
+    }
 
-  List<Move> order(List<Move> moves, OurBitBoard board, boolean isBlack) {
-    // 各手ごとに評価関数の値で降順ソート
-    return moves.stream()
-        .sorted((a, b) -> {
-            // それぞれの手を打った後の盤面を生成
-            OurBitBoard boardA = board.placed(a);
-            OurBitBoard boardB = board.placed(b);
-            // 評価値を計算（自分の色で評価）
-            float evalA = this.eval.value(boardA.encode());
-            float evalB = this.eval.value(boardB.encode());
-            return Float.compare(evalB, evalA); // 評価値が高い順
-        })
-        .toList();
+    // transTableにあるmoveを前に
+    List<Move> hit = new ArrayList<>();
+    List<Move> rest = new ArrayList<>();
+
+    for (var move : moves) {
+        var newBoard = board.placed(move);
+        if (transTable.containsKey(newBoard.hash())) hit.add(move);
+        else rest.add(move);
+    }
+
+    // 残りは簡易ヒューリスティックで並び替え（例：角優先）
+    rest.sort((a, b) -> Integer.compare(score(b), score(a))); // スコアが高い順
+
+    hit.addAll(rest);
+    return hit;
 }
 
-  // 評価値付きでMoveをソートして返す
-  List<Move> orderByEval(List<Move> moves, OurBitBoard board, boolean isBlack) {
-    return moves.stream()
-        .map(move -> {
-            OurBitBoard next = board.placed(move);
-            float eval = this.eval.value(next.encode());
-            return new Object[]{move, eval};
-        })
-        .sorted((a, b) -> Float.compare((float)b[1], (float)a[1])) // 降順
-        .map(a -> (Move)a[0])
-        .toList();
+int score(Move move) {
+    int i = move.getIndex();
+    if (i == 0 || i == 5 || i == 30 || i == 35) return 1000;
+    else if (i % 6 == 0 || i % 6 == 5 || i / 6 == 0 || i / 6 == 5) return -100;
+    else return 0;
 }
-=======
->>>>>>> beee06bd751f477477902acfbfd26449e0b91563
+
+
 }

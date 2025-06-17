@@ -1,4 +1,4 @@
-package p25x00;
+package enemy14;
 
 import static ap25.Board.SIZE;
 import static ap25.Color.BLACK;
