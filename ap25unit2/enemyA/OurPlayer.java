@@ -311,18 +311,6 @@ public class OurPlayer extends ap25.Player {
       if (!isBlack && this.move != null && !this.move.isPass()) {
       this.move = Move.of(this.move.getIndex(), WHITE);
       }
-
-    //  if (legals.contains(this.move.getIndex()) == false) {
-    //     System.out.println("**************");
-    //     System.out.println(legals);
-    //     System.out.println(this.move);
-    //     System.out.println(this.move.getIndex());
-    //     System.out.println(this.board);
-    //     System.exit(0);
-    //   }
-
-    
-
     }
     this.board = this.board.placed(this.move);
 
@@ -405,7 +393,6 @@ public class OurPlayer extends ap25.Player {
                 value = minSearch(newBoard, value, beta, 1, depth);
             }
         }
-
         if (value > score) {
             score = value;
         }
