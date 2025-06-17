@@ -397,7 +397,7 @@ public class OurPlayer extends ap25.Player {
 
     while (lowerBound < upperBound && count < Maxcount) {
         float beta = (g == lowerBound) ? g + 1 : g;
-        g = negaScout(board, beta - 1, beta, depth); // zero-width search
+        g = maxSearch(board, beta - 1, beta,0, depth); // zero-width search
         
         if (g < beta) {
             upperBound = g; // fail-low
@@ -409,39 +409,6 @@ public class OurPlayer extends ap25.Player {
     transTable.put(board.hash(), new NodeInfo(g, depth));
     return g;
   }
-
-  float negaScout(OurBitBoard board, float alpha, float beta, int depth) {
-    if (isTerminal(board, 0, depth)) return eval.value(board);
-
-    var moves = board.findLegalMoves(BLACK);
-    moves = order(moves, board);
-
-    boolean first = true;
-    float score = Float.NEGATIVE_INFINITY;
-
-    for (var move : moves) {
-        var newBoard = board.placed(move);
-        float value;
-        if (first) {
-            value = minSearch(newBoard, alpha, beta, 1, depth);
-            first = false;
-        } else {
-            // Null Window Search
-            value = minSearch(newBoard, alpha, alpha + 1, 1, depth);
-            if (value > alpha && value < beta) {
-                // Fail High, do full re-search
-                value = minSearch(newBoard, value, beta, 1, depth);
-            }
-        }
-        if (value > score) {
-            score = value;
-        }
-        if (score > alpha) alpha = score;
-        if (alpha >= beta) break;
-    }
-    return alpha;
-}
-
 
   ////////////////////////////////// αβ法開始
   float maxSearch(OurBitBoard board, float alpha, float beta, int depth,int maxDepth) {
