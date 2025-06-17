@@ -11,9 +11,14 @@ class Competition25 {
     Function<Color, Player[]> builder = (Color color) -> {
       return new Player[] {
           //new myplayer.MyPlayer(color),
-          new p25x11.OurPlayer(color),
-          // new myplayer.MyPlayer(color),
-          new p25x01.OurPlayer3(color),    
+
+          // new p25x01.OurPlayer3(color),
+          new myplayer.MyPlayer(color),
+          new p25x11mymy.OurPlayer(color),
+          new p25x11mymymy.OurPlayer(color),
+          // new p25x11.OurPlayer(color),
+          // new p25x01.MyPlayer(color),    
+
           // new enemy1.OurPlayer(color),
           // new enemy2.OurPlayer(color),
           // new enemy3.OurPlayer(color),
@@ -28,8 +33,9 @@ class Competition25 {
           // new enemy12.OurPlayer(color),
           // new enemy13.OurPlayer(color),
           // new enemy14.OurPlayer(color),
-          // new enemy15.OurPlayer(color),
-          //new enemy16.OurPlayer(color),
+
+          // new enemy16.OurPlayer(color),
+
           // new enemyA.OurPlayer(color),
           // new ap25.league.RandomPlayer(color),
           // new ap25.league.RandomPlayer(color),
@@ -37,7 +43,7 @@ class Competition25 {
       };
     };
 
-    var league = new League(3, builder, TIME_LIMIT_SECONDS);
+    var league = new League(1, builder, TIME_LIMIT_SECONDS);
     league.run();
   }
 
