@@ -1,4 +1,4 @@
-package myplayer;
+package p25x11mymymy;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -112,25 +112,25 @@ class MyEval {
   }
 }
 
-public class MyPlayer extends ap25.Player {
-  static final String MY_NAME = "oriMY";
+public class OurPlayer extends ap25.Player {
+  static final String MY_NAME = "mymymy"; // プレイヤー名
   MyEval eval;          // 評価関数
   int depthLimit;       // 探索の最大深さ
   Move move;            // 選んだ手
-  MyBoard board;        // 内部的に使うボード状態（MyBoard型）
+  OurBoard board;        // 内部的に使うボード状態（MyBoard型）
 
-  public MyPlayer(Color color) {
+  public OurPlayer(Color color) {
     this(MY_NAME, color, new MyEval(), 4);
   }
 
-  public MyPlayer(String name, Color color, MyEval eval, int depthLimit) {
+  public OurPlayer(String name, Color color, MyEval eval, int depthLimit) {
     super(name, color);
     this.eval = eval;
     this.depthLimit = depthLimit;
-    this.board = new MyBoard();
+    this.board = new OurBoard();
   }
 
-  public MyPlayer(String name, Color color, int depthLimit) {
+  public OurPlayer(String name, Color color, int depthLimit) {
     this(name, color, new MyEval(), depthLimit);
   }
 
@@ -175,7 +175,7 @@ public class MyPlayer extends ap25.Player {
       this.move = ((Move)best[0]).colored(getColor());
       float bestValue = (float)best[1];
 
-    // // 選択した手・評価値・盤面を表示
+    // 選択した手・評価値・盤面を表示
     // System.out.println("[選択手] " + this.move);
     // System.out.println("[評価値] " + bestValue);
     // System.out.println("[盤面]\n" + this.board);

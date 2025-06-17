@@ -1,4 +1,4 @@
-package myplayer;
+package p25x11mymy;
 
 import static ap25.Board.*;
 import static ap25.Color.*;
@@ -38,24 +38,27 @@ class MyEval {
   };
 
   // 評価関数：ゲームが終了していればスコア×1000000、そうでなければ各マスごとの合計
-  public float value(Board board) {
+  public float value(OurBitBoard board) {
     if (board.isEnd()) return 1000000 * board.score();
+
+        // 黒と白の石の数に応じてスコアを調整
+    int nb = board.count(Color.BLACK);
+    int nw = board.count(Color.WHITE);
+
     float psi = (float) IntStream.range(0, LENGTH)
-    .mapToDouble(k -> score(board, k))
+    .mapToDouble(k -> score(board, k,nb+nw))
     .reduce(Double::sum).orElse(0);
 
     int lb = board.findLegalMoves(BLACK).size();
     int lw = board.findLegalMoves(WHITE).size();
 
-    // 黒と白の石の数に応じてスコアを調整
-    int nb = board.count(Color.BLACK);
-    int nw = board.count(Color.WHITE);
 
-    float w1 = getw1(board);
-    float w2 = getw2(board);
-    float w3 = getw3(board);
-    float w4 = getw4(board);
-    float w5 = getw5(board);
+
+    float w1 = getw1(nb + nw); 
+    float w2 = getw2(nb + nw); 
+    float w3 = getw3(nb + nw);
+    float w4 = getw4(nb + nw);
+    float w5 = getw5(nb + nw);
 
     float value = w1*psi + w2*nb + w3*nw + w4*lb + w5*lw;
     // デバッグ用出力
@@ -66,71 +69,81 @@ class MyEval {
     return value; // 黒番ならプラス、白番ならマイナス
   }
 
-  float getw1(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+  float getw1(int stoneCount) {
     if (stoneCount < 12) return 100; // 序盤
     if (stoneCount < 24) return 50; // 中盤
     return 10; // 終盤
   }
 
-  float getw2(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+  float getw2(int stoneCount) {
     if (stoneCount < 12) return 10; // 序盤
     if (stoneCount < 24) return 20; // 中盤
     return 1; // 終盤
   }
-  float getw3(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+  float getw3(int stoneCount) {
     if (stoneCount < 12) return -10; // 序盤
     if (stoneCount < 24) return -20; // 中盤
     return -1; // 終盤
   }
-  float getw4(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+  float getw4(int stoneCount) {
     if (stoneCount < 12) return 1; // 序盤
     if (stoneCount < 24) return 5; // 中盤
     return 100; // 終盤
   }
-  float getw5(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+  float getw5(int stoneCount) {
     if (stoneCount < 12) return -1; // 序盤
     if (stoneCount < 24) return -5; // 中盤
     return -100; // 終盤
   }
   // 進行状況に応じて重み配列を返す
-  float[][] getM(Board board) {
-    int stoneCount = board.count(Color.BLACK) + board.count(Color.WHITE);
+  float[][] getM(int stoneCount) {
     if (stoneCount < 12) return M_EARLY; // 序盤
     if (stoneCount < 24) return M_MIDDLE; // 中盤
     return M_LATE; // 終盤
   }
 
   // 特定のマス（k）のスコア計算：盤面の色値×重み
-  float score(Board board, int k) {
-    float[][] M = getM(board);
+  float score(Board board, int k, int stoneCount) {
+    float[][] M = getM(stoneCount);
     return M[k / SIZE][k % SIZE] * board.get(k).getValue();
   }
+
+  float score(OurBitBoard bitBoard, int k, int stoneCount) {
+    float[][] M = getM(stoneCount); // 既存のgetMを流用
+    int row = k / SIZE;
+    int col = k % SIZE;
+    // k番目の色をビット演算で取得
+    int value;
+    if (((bitBoard.getBitBoardBlack() >>> k) & 1L) != 0) {
+        value = 1; // 黒
+    } else if (((bitBoard.getBitBoardWhite() >>> k) & 1L) != 0) {
+        value = -1; // 白
+    } else {
+        value = 0; // ブロックまたは空き
+    }
+    return M[row][col] * value;
+}
 }
 
-public class MyPlayer extends ap25.Player {
-  static final String MY_NAME = "oriMY";
+public class OurPlayer extends ap25.Player {
+  static final String MY_NAME = "bitMy";
   MyEval eval;          // 評価関数
   int depthLimit;       // 探索の最大深さ
   Move move;            // 選んだ手
-  MyBoard board;        // 内部的に使うボード状態（MyBoard型）
+  OurBoard board;        // 内部的に使うボード状態（MyBoard型）
 
-  public MyPlayer(Color color) {
+  public OurPlayer(Color color) {
     this(MY_NAME, color, new MyEval(), 4);
   }
 
-  public MyPlayer(String name, Color color, MyEval eval, int depthLimit) {
+  public OurPlayer(String name, Color color, MyEval eval, int depthLimit) {
     super(name, color);
     this.eval = eval;
     this.depthLimit = depthLimit;
-    this.board = new MyBoard();
+    this.board = new OurBoard();
   }
 
-  public MyPlayer(String name, Color color, int depthLimit) {
+  public OurPlayer(String name, Color color, int depthLimit) {
     this(name, color, new MyEval(), depthLimit);
   }
 
@@ -157,6 +170,10 @@ public class MyPlayer extends ap25.Player {
       // 黒番ならそのまま、白番なら反転（白→黒にする）
       var newBoard = isBlack() ? this.board.clone() : this.board.flipped();
       this.move = null;
+        long bitBoardBlack = newBoard.getBitBoard(BLACK);
+        long bitBoardWhite = newBoard.getBitBoard(WHITE);
+        long bitBoardBlock = newBoard.getBitBoard(BLOCK);
+         OurBitBoard BitBoard = new OurBitBoard(bitBoardBlack, bitBoardWhite, bitBoardBlock);// bit化
 
       // 最上位の合法手リスト
       var moves = order(newBoard.findLegalMoves(BLACK));
@@ -164,7 +181,7 @@ public class MyPlayer extends ap25.Player {
       // 並列で各手の評価値を計算
       var results = moves.parallelStream()
         .map(move -> {
-          var nextBoard = newBoard.placed(move);
+          var nextBoard = BitBoard.placed(move);
           float value = minSearch(nextBoard, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 1);
           return new Object[]{move, value};
         })
@@ -175,7 +192,7 @@ public class MyPlayer extends ap25.Player {
       this.move = ((Move)best[0]).colored(getColor());
       float bestValue = (float)best[1];
 
-    // // 選択した手・評価値・盤面を表示
+    // 選択した手・評価値・盤面を表示
     // System.out.println("[選択手] " + this.move);
     // System.out.println("[評価値] " + bestValue);
     // System.out.println("[盤面]\n" + this.board);
@@ -187,8 +204,8 @@ public class MyPlayer extends ap25.Player {
   }
 
   ////////// ミニマックス法だよ！
-  float maxSearch(Board board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) return this.eval.value(board);
+  float maxSearch(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board.encode(), depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(BLACK);
     moves = order(moves);  // 手の順番をランダムにシャッフル（枝刈り効果向上）
@@ -213,8 +230,8 @@ public class MyPlayer extends ap25.Player {
     return alpha;
   }
 
-  float minSearch(Board board, float alpha, float beta, int depth) {
-    if (isTerminal(board, depth)) return this.eval.value(board);
+  float minSearch(OurBitBoard board, float alpha, float beta, int depth) {
+    if (isTerminal(board.encode(), depth)) return this.eval.value(board);
 
     var moves = board.findLegalMoves(WHITE);
     moves = order(moves);
