@@ -228,7 +228,7 @@ public class OurPlayer3 extends ap25.Player {
     private final Map<Long, Float> transTable;
 
     public OurPlayer3(Color color) {
-        this(MY_NAME, color, new EnhancedEval(), 10);
+        this(MY_NAME, color, new EnhancedEval(), 9);
     }
 
     public OurPlayer3(String name, Color color, EnhancedEval eval, int depthLimit) {
