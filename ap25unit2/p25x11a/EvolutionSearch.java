@@ -1,4 +1,4 @@
-package p25x11;
+package p25x11a;
 
 import ap25.*;
 import java.util.*;

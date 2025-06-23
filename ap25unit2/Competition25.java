@@ -13,7 +13,7 @@ class Competition25 {
           //new myplayer.MyPlayer(color),
           // new p25x01.OurPlayer3(color),
           new myplayer.MyPlayer(color),
-          new p25x11mymy.OurPlayer(color),
+          new p25x11.OurPlayer(color),
           new p25x11mymymy.OurPlayer(color),
           // new p25x11.OurPlayer(color),
           // new p25x01.MyPlayer(color),    
@@ -45,8 +45,8 @@ class Competition25 {
   }
 
   public static void singleGame(String args[]) {
-    var player1 = new p25x11.OurPlayer(BLACK);
-    var player2 = new p25x11.OurPlayer(WHITE);
+    var player1 = new p25x11a.OurPlayer(BLACK);
+    var player2 = new p25x11a.OurPlayer(WHITE);
     var board = new OfficialBoard();
     var game = new Game(board, player1, player2, TIME_LIMIT_SECONDS);
     game.play();

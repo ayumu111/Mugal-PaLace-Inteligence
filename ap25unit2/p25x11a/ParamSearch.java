@@ -2,7 +2,7 @@
 // 実行例: java ParamSearch
 // 必要に応じてOurPlayerの重みを変更し、対局結果を記録します
 
-package p25x11;
+package p25x11a;
 
 import java.io.FileWriter;
 import java.io.IOException;

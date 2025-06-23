@@ -1,16 +1,15 @@
 package p25x11;
 
-import static ap25.Board.SIZE;
-import static ap25.Color.BLACK;
-import static ap25.Color.NONE;
-import static ap25.Color.WHITE;
-import ap25.Move;
+import static ap25.Board.*;
+import static ap25.Color.*;
+
 import java.util.List;
 import java.util.Map;
 
-// 盤面を整形して文字列として返すクラス
+import ap25.*;
+// ボードのフォーマットを持つクラス
 public class OurBoardFormatter {
-  // OurBoardの状態を文字列として整形して返すメソッド
+  // MyBoardの状態を文字列として整形して返すメソッド
   public static String format(OurBoard board) {
     var turn = board.getTurn(); // 現在の手番
     var move = board.getMove(); // 直前の手
