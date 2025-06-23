@@ -10,10 +10,10 @@ class Competition25 {
   public static void main(String args[]) {
     Function<Color, Player[]> builder = (Color color) -> {
       return new Player[] {
-          //new myplayer.MyPlayer(color),
-          new p25x11.OurPlayer(color),
           // new myplayer.MyPlayer(color),
-          new p25x01.OurPlayer3(color),    
+          //new p25x11.OurPlayer(color),
+          // new myplayer.MyPlayer(color),
+          //new p25x01.OurPlayer3(color),    
           // new enemy1.OurPlayer(color),
           // new enemy2.OurPlayer(color),
           // new enemy3.OurPlayer(color),
@@ -30,9 +30,9 @@ class Competition25 {
           // new enemy14.OurPlayer(color),
           // new enemy15.OurPlayer(color),
           //new enemy16.OurPlayer(color),
-          // new enemyA.OurPlayer(color),
-          // new ap25.league.RandomPlayer(color),
-          // new ap25.league.RandomPlayer(color),
+           new enemyA.OurPlayer(color),
+         new ap25.league.RandomPlayer(color),
+         new ap25.league.RandomPlayer(color),
 
       };
     };
