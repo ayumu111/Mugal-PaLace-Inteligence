@@ -1,4 +1,4 @@
-package p25x11;
+package p25x11a;
 
 import ap25.*;
 import java.util.*;
@@ -9,7 +9,7 @@ public class EvolutionSearch {
     static final int PHASES = 3;  // 局面数
     static final int POP_SIZE = 10; // 個体数
     static final int GENERATIONS = 100; // 世代数
-    static final float MUTATION_STDDEV = 0.5f; // 突然変異の標準偏差
+    static final float MUTATION_STDDEV = 1.2f; // 突然変異の標準偏差
     static final float INIT_MIN = -5, INIT_MAX = 5; // 初期値範囲
 
     // --- 追加: オプションフラグ ---
@@ -91,6 +91,10 @@ public class EvolutionSearch {
                 }
             }
             System.out.println("Gen " + gen + " best fitness: " + fitness[bestIdx]);
+            // 10世代ごとに最良個体をファイルに保存
+            if (gen % 10 == 0) {
+                saveWeightsToFile(population[0], "best_customW.txt");
+            }
         }
         if (executor != null) executor.shutdown();
         // 最良個体の出力
@@ -139,39 +143,56 @@ public class EvolutionSearch {
 
     static float evaluate(float[][] customW) {
         // 評価対象の重みでOurPlayerを生成
-        int depth = 9; // 探索深さ（適宜調整）
+        int depth = 8; // 探索深さ（適宜調整）
         int games = 4; // 対戦回数（偶数にすると先後公平）
         int enemyKind = 2;
         float totalScore = 0;
         int winCount = 0;
+        int validGames = 0;
         try {
             for (int i = 0; i < games; i++) {
                 // 先手OurPlayer vs 後手MyPlayer
                 ap25.Player black = new OurPlayer("evo", ap25.Color.BLACK, new MyEval(ap25.Color.BLACK, customW), depth);
-                ap25.Player white = new p25x01.MyPlayer(ap25.Color.WHITE);
+                ap25.Player white = new p25x01.OurPlayer3(ap25.Color.WHITE);
                 float score1 = runMatch(black, white);
-                totalScore += score1;
-                if (score1 > 0) winCount++;
+                if (!Float.isNaN(score1)) {
+                    totalScore += score1;
+                    if (score1 > 0) winCount++;
+                    validGames++;
+                }
                 white = new myplayer.MyPlayer(ap25.Color.WHITE);
                 float score2 = runMatch(black, white);
-                totalScore += score2;
-                if (score2 > 0) winCount++;
+                if (!Float.isNaN(score2)) {
+                    totalScore += score2;
+                    if (score2 > 0) winCount++;
+                    validGames++;
+                }
 
                 // 先手MyPlayer vs 後手OurPlayer
-                black = new p25x01.MyPlayer(ap25.Color.BLACK);
+                black = new p25x01.OurPlayer3(ap25.Color.BLACK);
                 white = new OurPlayer("evo", ap25.Color.WHITE, new MyEval(ap25.Color.WHITE, customW), depth);
                 float score3 = runMatch(black, white);
-                totalScore -= score3; // 白番はスコアをマイナス
-                if (score3 < 0) winCount++;
+                if (!Float.isNaN(score3)) {
+                    totalScore -= score3; // 白番はスコアをマイナス
+                    if (score3 < 0) winCount++;
+                    validGames++;
+                }
                 black = new myplayer.MyPlayer(ap25.Color.BLACK);
                 float score4 = runMatch(black, white);
-                totalScore -= score4; // 白番はスコアをマイナス
-                if (score4 < 0) winCount++;
+                if (!Float.isNaN(score4)) {
+                    totalScore -= score4; // 白番はスコアをマイナス
+                    if (score4 < 0) winCount++;
+                    validGames++;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        float avgScore = totalScore / (games * enemyKind);
+        if (validGames == 0) {
+            System.out.println("全ての対局がタイムアウトしました。評価値は0とします。");
+            return 0; // 全てタイムアウトなら0
+        }
+        float avgScore = totalScore / validGames;
         // 勝利数を優先し、同数なら平均スコアで比較
         return winCount + avgScore * 0.001f;
     }
@@ -182,6 +203,18 @@ public class EvolutionSearch {
         ap25.league.Game game = new ap25.league.Game(board, black, white, 60);
         game.play();
         Board finalBoard = getBoardReflect(game);
+        // タイムアウト判定: movesリストの最後の手がtimeoutならFloat.NaNを返す
+        try {
+            java.lang.reflect.Field f = game.getClass().getDeclaredField("moves");
+            f.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.List<ap25.Move> moves = (java.util.List<ap25.Move>) f.get(game);
+            if (!moves.isEmpty() && moves.get(moves.size() - 1).isTimeout()) {
+                return Float.NaN;
+            }
+        } catch (Exception e) {
+            // 失敗時は通常通りスコア返す
+        }
         return finalBoard.score();
     }
 

@@ -1,4 +1,4 @@
-package p25x11;
+package p25x11my;
 
 import ap25.Color;
 import static ap25.Color.BLACK;

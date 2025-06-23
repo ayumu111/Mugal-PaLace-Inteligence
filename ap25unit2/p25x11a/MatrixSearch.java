@@ -2,7 +2,7 @@
 // 実行例: java MatrixSearch
 // M_EARLY, M_MIDDLE, M_LATEの最適な値を探索
 
-package p25x11;
+package p25x11a;
 
 import static ap25.Color.BLACK;
 import static ap25.Color.WHITE;

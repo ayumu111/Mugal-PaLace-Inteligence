@@ -1,4 +1,4 @@
-package p25x11;
+package p25x11mymymy;
 
 import static ap25.Board.*;
 import static ap25.Color.*;

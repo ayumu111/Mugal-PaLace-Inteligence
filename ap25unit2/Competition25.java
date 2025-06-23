@@ -10,10 +10,15 @@ class Competition25 {
   public static void main(String args[]) {
     Function<Color, Player[]> builder = (Color color) -> {
       return new Player[] {
-          // new myplayer.MyPlayer(color),
-          //new p25x11.OurPlayer(color),
-          // new myplayer.MyPlayer(color),
-          //new p25x01.OurPlayer3(color),    
+          //new myplayer.MyPlayer(color),
+
+          // new p25x01.OurPlayer3(color),
+          new myplayer.MyPlayer(color),
+          new p25x11.OurPlayer(color),
+          new p25x11mymymy.OurPlayer(color),
+          // new p25x11.OurPlayer(color),
+          // new p25x01.MyPlayer(color),    
+
           // new enemy1.OurPlayer(color),
           // new enemy2.OurPlayer(color),
           // new enemy3.OurPlayer(color),
@@ -30,20 +35,20 @@ class Competition25 {
           // new enemy14.OurPlayer(color),
           // new enemy15.OurPlayer(color),
           //new enemy16.OurPlayer(color),
-           new enemyA.OurPlayer(color),
-         new ap25.league.RandomPlayer(color),
-         new ap25.league.RandomPlayer(color),
+          // new enemyA.OurPlayer(color),
+          // new ap25.league.RandomPlayer(color),
+          // new ap25.league.RandomPlayer(color),
 
       };
     };
 
-    var league = new League(3, builder, TIME_LIMIT_SECONDS);
+    var league = new League(1, builder, TIME_LIMIT_SECONDS);
     league.run();
   }
 
   public static void singleGame(String args[]) {
-    var player1 = new p25x11.OurPlayer(BLACK);
-    var player2 = new p25x11.OurPlayer(WHITE);
+    var player1 = new p25x11a.OurPlayer(BLACK);
+    var player2 = new p25x11a.OurPlayer(WHITE);
     var board = new OfficialBoard();
     var game = new Game(board, player1, player2, TIME_LIMIT_SECONDS);
     game.play();
